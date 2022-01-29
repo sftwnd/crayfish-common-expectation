@@ -1,8 +1,5 @@
 package com.github.sftwnd.crayfish.common.expectation;
 
-import com.github.sftwnd.crayfish.common.required.RequiredFunction;
-import com.github.sftwnd.crayfish.common.required.RequiredSupplier;
-
 import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
@@ -42,7 +39,7 @@ public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<
      * @return package
      */
     @Nonnull
-    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> supply(@Nonnull M element, @Nonnull RequiredSupplier<T> tick) {
+    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> supply(@Nonnull M element, @Nonnull TimeSupplier<T> tick) {
         return extract(element, ignore -> tick.get());
     }
 
@@ -55,7 +52,7 @@ public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<
      * @return package
      */
     @Nonnull
-    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> extract(@Nonnull M element, @Nonnull RequiredFunction<M,T> extractor) {
+    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> extract(@Nonnull M element, @Nonnull TimeExtractor<M,T> extractor) {
         return new ExpectedPackage<M,T>() {
             @Override @Nonnull public M getElement() { return element; }
             @Override @Nonnull public T getTick() { return extractor.apply(element); }
