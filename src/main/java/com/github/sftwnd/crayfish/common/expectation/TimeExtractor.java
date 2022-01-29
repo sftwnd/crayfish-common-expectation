@@ -9,7 +9,7 @@ import java.util.function.Function;
  * @param <E> element type
  * @param <T> time-specific type
  */
-interface TimeExtractor<E,T extends TemporalAccessor> extends Function<E,T> {
+public interface TimeExtractor<E,T extends TemporalAccessor> extends Function<E,T> {
     /**
      * Applies this function to the given argument for time extraction
      *
