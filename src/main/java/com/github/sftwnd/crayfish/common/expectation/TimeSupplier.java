@@ -13,5 +13,5 @@ interface TimeSupplier<T extends TemporalAccessor> extends Supplier<T> {
      * Gets a time-specific result.
      * @return time-specific value
      */
-    @Nonnull T get();
+    @Override @Nonnull T get();
 }

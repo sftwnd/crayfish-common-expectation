@@ -16,7 +16,7 @@ interface TimeExtractor<E,T extends TemporalAccessor> extends Function<E,T> {
      * @param element source element
      * @return the time-specific result from the element
      */
-    @Nonnull T apply(@Nonnull E element);
+    @Override @Nonnull T apply(@Nonnull E element);
 
 }
 
