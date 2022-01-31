@@ -9,6 +9,9 @@
     <version>1.0.0-SNAPSHOT</version>
 
     <name>CrayFish :: COMMON :: Expectation</name>
+    <description>
+        Expectation object for time-based marker creation and packaging with it
+    </description>
     <url>https://github.com/sftwnd/crayfish-common-expectation</url>
 
     <licenses>
