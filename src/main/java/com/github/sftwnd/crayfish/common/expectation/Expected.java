@@ -25,6 +25,7 @@ public interface Expected<T extends TemporalAccessor> {
      * Identification that a point in time has passed to a specified point in time.
      * If not specified, then currently
      *
+     * @param tick point in time at which the check is made
      * @return confirmation of the time moment
      */
     default boolean happened(TemporalAccessor tick) {

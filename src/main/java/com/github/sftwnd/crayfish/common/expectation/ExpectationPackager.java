@@ -1,12 +1,11 @@
 package com.github.sftwnd.crayfish.common.expectation;
 
-import com.github.sftwnd.crayfish.common.required.RequiredFunction;
-
 import javax.annotation.Nonnull;
 import java.time.temporal.TemporalAccessor;
 import java.util.Objects;
+import java.util.function.Function;
 
-public class ExpectationPackager<M,T extends TemporalAccessor> implements RequiredFunction<M, ExpectedPackage<M,T>> {
+public class ExpectationPackager<M,T extends TemporalAccessor> implements Function<M, ExpectedPackage<M,T>> {
 
     private final Expectation<M,T> fireTimeExtractor;
 
