@@ -6,7 +6,7 @@
 
     <groupId>com.github.sftwnd.crayfish.common</groupId>
     <artifactId>crayfish-common-expectation</artifactId>
-    <version>1.0.0</version>
+    <version>1.0.1</version>
 
     <name>CrayFish :: COMMON :: Expectation</name>
     <description>
@@ -35,7 +35,7 @@
         <url>https://github.com.github.sftwnd/crayfish-common-expectation</url>
         <connection>scm:git:https://github.com/sftwnd/crayfish-common-expectation.git</connection>
         <developerConnection>scm:git:git@github.com:sftwnd/crayfish-common-expectation.git</developerConnection>
-        <tag>crayfish-common-expectation-1.0.0</tag>
+        <tag>crayfish-common-expectation-1.0.1</tag>
     </scm>
 
     <distributionManagement>

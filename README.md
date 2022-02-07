@@ -44,8 +44,10 @@ Realize package with time-marker extractor from object. Convert object to Expect
 ```java
     public ExpectationPackager(@Nonnull Expectation<M,T> fireTimeExtractor) // Packager constructor with Time-marker extractor
 ```
-Creation of ExpectedPackage from object by the timeExtractor 
+Creation of ExpectedPackage from object by the timeExtractor
 ```java
     public @Nonnull ExpectedPackage<M, T> apply(@Nonnull M element)
 ```
 
+---
+Copyright © 2017-2022 Andrey D. Shindarev. All rights reserved.

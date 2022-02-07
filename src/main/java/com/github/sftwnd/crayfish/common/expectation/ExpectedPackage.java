@@ -3,6 +3,7 @@ package com.github.sftwnd.crayfish.common.expectation;
 import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
+import java.util.Objects;
 
 /**
  * Packing an object into a package, where a temporary marker is attached to the element
@@ -53,9 +54,11 @@ public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<
      */
     @Nonnull
     static <M,T extends TemporalAccessor> ExpectedPackage<M,T> extract(@Nonnull M element, @Nonnull TimeExtractor<M,T> extractor) {
+        Objects.requireNonNull(element, "ExpectedPackage::extract - element is null");
+        Objects.requireNonNull(extractor, "ExpectedPackage::extract - extractor is null");
         return new ExpectedPackage<M,T>() {
             @Override @Nonnull public M getElement() { return element; }
-            @Override @Nonnull public T getTick() { return extractor.apply(element); }
+            @Override @Nonnull public T getTick() { return Objects.requireNonNull(extractor.apply(element), "ExpectedPackage::getTick - result is null"); }
             @Override public String toString() { return String.format("ExpectedPackage(%s,%s)", Instant.from(getTick()), getElement()); }
         };
     }

@@ -10,6 +10,7 @@ import java.time.temporal.TemporalAccessor;
  * @param <M> element type
  * @param <T> time marker type
  */
+@FunctionalInterface
 public interface Expectation<M, T extends TemporalAccessor> extends TimeExtractor<M,T> {
 
     /**
@@ -19,6 +20,5 @@ public interface Expectation<M, T extends TemporalAccessor> extends TimeExtracto
      * @return the function result
      */
     @Nonnull T apply(@Nonnull M element);
-
 
 }
