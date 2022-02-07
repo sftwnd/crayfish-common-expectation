@@ -8,8 +8,8 @@ import java.time.Instant;
 import java.time.temporal.ChronoUnit;
 import java.util.regex.Pattern;
 
-import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExpectedPackageTest {
@@ -33,6 +33,22 @@ class ExpectedPackageTest {
         ExpectedPackage<Object, Instant> pack = ExpectedPackage.extract(object, obj -> instant);
         assertSame(object, pack.getElement(), "ExpectedPackage::getElement has to return the same object as in .extract method attribute");
         assertSame(instant, pack.getTick(), "ExpectedPackage::getTick has to return the same object as in .extract method attribute");
+    }
+
+    @Test
+    void extractOnNullElementTest() {
+        assertThrows(NullPointerException.class, () -> ExpectedPackage.extract(null, obj -> instant), "ExpectedPackage::extract has to throws NPE if object is null");
+    }
+
+    @Test
+    void extractOnNullExtractorTest() {
+        assertThrows(NullPointerException.class, () -> ExpectedPackage.extract(object, null), "ExpectedPackage::extract has to throws NPE if extractor is null");
+    }
+
+    @Test
+    void extractOnExtractNullValueTest() {
+        ExpectedPackage<Object,Instant> pack = ExpectedPackage.extract(object, obj -> null);
+        assertThrows(NullPointerException.class, pack::getTick, "ExpectedPackage::extract::getTick has to throws NPE if generated tick is null");
     }
 
     @Test
