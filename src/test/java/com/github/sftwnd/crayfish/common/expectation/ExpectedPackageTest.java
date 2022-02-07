@@ -6,8 +6,11 @@ import org.junit.jupiter.api.Test;
 
 import java.time.Instant;
 import java.time.temporal.ChronoUnit;
+import java.util.regex.Pattern;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExpectedPackageTest {
 
@@ -30,6 +33,13 @@ class ExpectedPackageTest {
         ExpectedPackage<Object, Instant> pack = ExpectedPackage.extract(object, obj -> instant);
         assertSame(object, pack.getElement(), "ExpectedPackage::getElement has to return the same object as in .extract method attribute");
         assertSame(instant, pack.getTick(), "ExpectedPackage::getTick has to return the same object as in .extract method attribute");
+    }
+
+    @Test
+    void toStringTest() {
+        ExpectedPackage<Object, Instant> pack = ExpectedPackage.extract("toStringTest", obj -> instant);
+        Pattern pattern = Pattern.compile("ExpectedPackage\\(.*,"+pack.getElement()+"\\)");
+        assertTrue(pattern.matcher(pack.toString()).matches(), "ExpectedPackage::toString return wrong result: "+pack);
     }
 
     Object object;

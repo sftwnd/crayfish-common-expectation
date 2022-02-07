@@ -1,3 +1,4 @@
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=sftwnd_crayfish_common_expectation&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=sftwnd_crayfish_common_expectation) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=sftwnd_crayfish_common_expectation&metric=coverage)](https://sonarcloud.io/summary/new_code?id=sftwnd_crayfish_common_expectation) ![CircleCI](https://img.shields.io/circleci/build/github/sftwnd/crayfish-common-expectation) [![License](https://img.shields.io/badge/License-BSD_3--Clause-blue.svg)](https://github.com/sftwnd/crayfish-common-expectation/blob/master/LICENSE)
 # Crayfish Common Expectation
 Expectation object for time-based marker creation &amp; packaging with it
 
@@ -43,8 +44,10 @@ Realize package with time-marker extractor from object. Convert object to Expect
 ```java
     public ExpectationPackager(@Nonnull Expectation<M,T> fireTimeExtractor) // Packager constructor with Time-marker extractor
 ```
-Creation of ExpectedPackage from object by the timeExtractor 
+Creation of ExpectedPackage from object by the timeExtractor
 ```java
     public @Nonnull ExpectedPackage<M, T> apply(@Nonnull M element)
 ```
 
+---
+Copyright © 2017-2022 Andrey D. Shindarev. All rights reserved.
