@@ -8,10 +8,13 @@ import java.util.function.Supplier;
  * Extraction of nonnull time
  * @param <T> time-specific type
  */
+@FunctionalInterface
 public interface TimeSupplier<T extends TemporalAccessor> extends Supplier<T> {
+
     /**
      * Gets a time-specific result.
      * @return time-specific value
      */
     @Override @Nonnull T get();
+
 }
