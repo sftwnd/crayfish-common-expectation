@@ -41,6 +41,8 @@ class ExpectedTest {
         Comparator<StringPack> stringPackComparator = Comparator.comparing(sp -> sp.string);
         Comparator<ExpectedStringPack> comparator = Expected.comparator(stringPackComparator);
         assertEquals(0, comparator.compare(new ExpectedStringPack("A",instant),  new ExpectedStringPack("A",instant)), "comparator(comparator).compare has to return zero for equals values");
+        assertEquals(-1, comparator.compare(null,  new ExpectedStringPack("A",instant)), "comparator(comparator).compare has to return -1 for unequals values where left is null");
+        assertEquals(1, comparator.compare(new ExpectedStringPack("A",instant),  null), "comparator(comparator).compare has to return 1 for unequals values where right is null");
         assertTrue(comparator.compare(new ExpectedStringPack("A",instant.minusMillis(1)),  new ExpectedStringPack("A",instant)) < 0, "comparator(comparator).compare(prev instant(a),instant(a)) has to be less than zero");
         assertTrue(comparator.compare(new ExpectedStringPack("A",instant),  new ExpectedStringPack("A",instant.minusMillis(1))) > 0, "comparator(comparator).compare(instant(a),prev instant(a)) has to be more than zero");
         assertTrue(comparator.compare(new ExpectedStringPack("A",instant),  new ExpectedStringPack("B",instant)) < 0, "comparator(comparator).compare(instant(a),instant(b)) has to be less than zero");
