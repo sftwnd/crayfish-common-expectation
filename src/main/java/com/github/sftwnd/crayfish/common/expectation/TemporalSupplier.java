@@ -1,6 +1,7 @@
 package com.github.sftwnd.crayfish.common.expectation;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 import java.time.temporal.TemporalAccessor;
 import java.util.function.Supplier;
 
@@ -9,12 +10,12 @@ import java.util.function.Supplier;
  * @param <T> time-specific type
  */
 @FunctionalInterface
-public interface TimeSupplier<T extends TemporalAccessor> extends Supplier<T> {
+public interface TemporalSupplier<T extends TemporalAccessor> extends Supplier<T> {
 
     /**
      * Gets a time-specific result.
      * @return time-specific value
      */
-    @Override @Nonnull T get();
+    @Override @NonNull T get();
 
 }

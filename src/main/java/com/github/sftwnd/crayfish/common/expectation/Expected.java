@@ -1,7 +1,8 @@
 package com.github.sftwnd.crayfish.common.expectation;
 
-import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
+import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
+
 import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 import java.util.Comparator;
@@ -20,7 +21,7 @@ public interface Expected<T extends TemporalAccessor> {
      * Get the point in time associated with an object.
      * @return time moment
      */
-    @Nonnull T getTick();
+    @NonNull T getTick();
 
     /**
      * Identification that a point in time has passed to a specified point in time.
@@ -50,7 +51,7 @@ public interface Expected<T extends TemporalAccessor> {
      */
     @SuppressWarnings({
             "unchecked",
-            /*  Just because you can do something, doesn’t mean you should, and that’s the case with nested ternary
+            /*  Just because you can do something, does not mean you should, and that’s the case with nested ternary
                 operations. Nesting ternary operators results in the kind of code that may seem clear as day when you
                 write it, but six months later will leave maintainers (or worse - future you) scratching their heads
                 and cursing.
@@ -82,7 +83,7 @@ public interface Expected<T extends TemporalAccessor> {
      * @param second second compared moment
      * @return comparison result
      */
-    static int compareTemporalAccessor(@Nonnull TemporalAccessor first, @Nonnull TemporalAccessor second) {
+    static int compareTemporalAccessor(@NonNull TemporalAccessor first, @NonNull TemporalAccessor second) {
         return Instant.from(first).compareTo(Instant.from(second));
     }
 

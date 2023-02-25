@@ -1,6 +1,7 @@
 package com.github.sftwnd.crayfish.common.expectation;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 import java.time.temporal.TemporalAccessor;
 import java.util.function.Function;
 
@@ -10,7 +11,7 @@ import java.util.function.Function;
  * @param <T> time-specific type
  */
 @FunctionalInterface
-public interface TimeExtractor<E,T extends TemporalAccessor> extends Function<E,T> {
+public interface TemporalExtractor<E,T extends TemporalAccessor> extends Function<E,T> {
 
     /**
      * Applies this function to the given argument for time extraction
@@ -18,7 +19,7 @@ public interface TimeExtractor<E,T extends TemporalAccessor> extends Function<E,
      * @param element source element
      * @return the time-specific result from the element
      */
-    @Override @Nonnull T apply(@Nonnull E element);
+    @Override @NonNull T apply(@NonNull E element);
 
 }
 
