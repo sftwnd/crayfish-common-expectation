@@ -1,6 +1,7 @@
 package com.github.sftwnd.crayfish.common.expectation;
 
-import javax.annotation.Nonnull;
+import edu.umd.cs.findbugs.annotations.NonNull;
+
 import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 import java.util.Objects;
@@ -16,7 +17,7 @@ public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<
      * Packed item
      * @return item
      */
-    @Nonnull M getElement();
+    @NonNull M getElement();
 
     /**
      * Packing an element into a package with a specified time
@@ -26,22 +27,26 @@ public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<
      * @param <T> time marker type
      * @return package
      */
-    @Nonnull
-    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> pack(@Nonnull M element, @Nonnull T tick) {
+    @NonNull static <M,T extends TemporalAccessor> ExpectedPackage<M,T> pack(@NonNull M element, @NonNull T tick) {
         return supply(element, () -> tick);
     }
 
     /**
      * Packing an element into a package with the construction of a time marker at the time of packaging
      * @param element item
-     * @param tick time marker construction supplier
+     * @param temporalSupplier time marker construction supplier
      * @param <M> type of packed object
      * @param <T> time marker type
      * @return package
      */
-    @Nonnull
-    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> supply(@Nonnull M element, @Nonnull TimeSupplier<T> tick) {
-        return extract(element, ignore -> tick.get());
+    @NonNull static <M,T extends TemporalAccessor> ExpectedPackage<M,T> supply(@NonNull M element, @NonNull TemporalSupplier<T> temporalSupplier) {
+        Objects.requireNonNull(element, "ExpectedPackage::extract - element is null");
+        Objects.requireNonNull(temporalSupplier, "ExpectedPackage::extract - temporalSupplier is null");
+        return new ExpectedPackage<M,T>() {
+            @Override @NonNull public M getElement() { return element; }
+            @Override @NonNull public T getTick() { return Objects.requireNonNull(temporalSupplier.get(), "ExpectedPackage::getTick - result is null"); }
+            @Override public String toString() { return ExpectedPackage.toString(this); }
+        };
     }
 
     /**
@@ -52,15 +57,18 @@ public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<
      * @param <T> time marker type
      * @return package
      */
-    @Nonnull
-    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> extract(@Nonnull M element, @Nonnull TimeExtractor<M,T> extractor) {
-        Objects.requireNonNull(element, "ExpectedPackage::extract - element is null");
+    @NonNull static <M,T extends TemporalAccessor> ExpectedPackage<M,T> extract(@NonNull M element, @NonNull TemporalExtractor<M,T> extractor) {
         Objects.requireNonNull(extractor, "ExpectedPackage::extract - extractor is null");
-        return new ExpectedPackage<M,T>() {
-            @Override @Nonnull public M getElement() { return element; }
-            @Override @Nonnull public T getTick() { return Objects.requireNonNull(extractor.apply(element), "ExpectedPackage::getTick - result is null"); }
-            @Override public String toString() { return String.format("ExpectedPackage(%s,%s)", Instant.from(getTick()), getElement()); }
-        };
+        return supply(element, () -> extractor.apply(element));
+    }
+
+    /**
+     * Returns a String object representing the specified integer. The argument is converted to signed
+     * @param expectedPackage - an expected package to be converted
+     * @return string representation of the argument
+     */
+    static String toString(ExpectedPackage<?,?> expectedPackage) {
+        return String.format("ExpectedPackage(%s,%s)", Instant.from(expectedPackage.getTick()), expectedPackage.getElement());
     }
 
 }

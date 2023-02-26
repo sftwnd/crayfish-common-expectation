@@ -1,10 +1,12 @@
-package com.github.sftwnd.crayfish.common.expectation;
+package com.github.sftwnd.crayfish.common.expectation.test;
 
+import com.github.sftwnd.crayfish.common.expectation.Expected;
+import edu.umd.cs.findbugs.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
+import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
-import javax.annotation.Nonnull;
 import java.time.Instant;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
@@ -17,15 +19,15 @@ class ExpectedTest {
 
     @Test
     void happenedTest() {
-        assertTrue(expected(Instant.now().minusMillis(10)).happened(), "Past Expected has to be happend");
-        assertFalse(expected(Instant.now().plusMillis(10)).happened(), "Past Expected hasn't got to be happend");
+        Assertions.assertTrue(expected(Instant.now().minusMillis(10)).happened(), "Past Expected has to be happend");
+        Assertions.assertFalse(expected(Instant.now().plusMillis(10)).happened(), "Past Expected hasn't got to be happend");
     }
 
     @Test
     void happenedOnTimeTest() {
-        assertTrue(expected(instant).happened(instant), "Current Expected on the moment has to be happend");
-        assertTrue(expected(instant.minusMillis(1)).happened(instant), "Past Expected on the moment has to be happend");
-        assertFalse(expected(instant.plusMillis(1)).happened(instant), "Past Expected on the moment hasn't got to be happend");
+        Assertions.assertTrue(expected(instant).happened(instant), "Current Expected on the moment has to be happend");
+        Assertions.assertTrue(expected(instant.minusMillis(1)).happened(instant), "Past Expected on the moment has to be happend");
+        Assertions.assertFalse(expected(instant.plusMillis(1)).happened(instant), "Past Expected on the moment hasn't got to be happend");
     }
 
     @Test
@@ -68,7 +70,7 @@ class ExpectedTest {
         }
 
         @Override
-        public int compareTo(@Nonnull StringPack o) {
+        public int compareTo(@NonNull StringPack o) {
             return string.compareTo(o.string);
         }
     }
@@ -79,7 +81,7 @@ class ExpectedTest {
             super(string);
             this.instant = instant;
         }
-        @Nonnull
+        @NonNull
         @Override
         public Instant getTick() {
             return this.instant;
@@ -88,7 +90,7 @@ class ExpectedTest {
 
     Expected<Instant> expected(Instant instant) {
         return new Expected<Instant>() {
-            @Nonnull
+            @NonNull
             @Override
             public Instant getTick() {
                 return instant;
