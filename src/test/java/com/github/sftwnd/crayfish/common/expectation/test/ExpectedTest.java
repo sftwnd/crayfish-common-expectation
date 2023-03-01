@@ -13,7 +13,8 @@ import java.time.ZonedDateTime;
 import java.time.temporal.ChronoUnit;
 import java.util.Comparator;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ExpectedTest {
 
@@ -89,13 +90,7 @@ class ExpectedTest {
     }
 
     Expected<Instant> expected(Instant instant) {
-        return new Expected<Instant>() {
-            @NonNull
-            @Override
-            public Instant getTick() {
-                return instant;
-            }
-        };
+        return () -> instant;
     }
 
     Instant instant;
