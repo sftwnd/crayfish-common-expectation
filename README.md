@@ -46,4 +46,4 @@ Construct package from element with time marker extracted from element
 ```
 
 ---
-Copyright © 2017-2022 Andrey D. Shindarev. All rights reserved.
+Copyright © 2017-2023 Andrey D. Shindarev. All rights reserved.
