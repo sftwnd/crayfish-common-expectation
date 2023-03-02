@@ -59,8 +59,8 @@ class ExpectedPackageTest {
         assertTrue(pattern.matcher(pack.toString()).matches(), "ExpectedPackage::toString return wrong result: "+pack);
     }
 
-    Object object;
-    Instant instant;
+    private Object object;
+    private Instant instant;
 
     @BeforeEach
     void startUp() {
