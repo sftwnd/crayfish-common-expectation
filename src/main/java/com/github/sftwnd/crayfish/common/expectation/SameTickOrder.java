@@ -40,7 +40,7 @@ final class SameTickOrder {
         if (type != second.getClass()) {
             return IDENTITY.compare(type, second.getClass());
         }
-        return COMPARABLE.get(type) ? natural(first, second) : IDENTITY.compare(first, second);
+        return Boolean.TRUE.equals(COMPARABLE.get(type)) ? natural(first, second) : IDENTITY.compare(first, second);
     }
 
     @SuppressWarnings("unchecked")
