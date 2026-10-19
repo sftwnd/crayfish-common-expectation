@@ -68,7 +68,7 @@ class ComparableArgumentTest {
             return 0;
         }
         public int compareTo(ToString other) {
-            return 0;
+            return this == other ? 0 : 1;
         }
     }
 
