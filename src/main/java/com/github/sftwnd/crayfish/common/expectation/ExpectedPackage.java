@@ -40,8 +40,8 @@ public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<
      * @return package
      */
     @NonNull static <M,T extends TemporalAccessor> ExpectedPackage<M,T> supply(@NonNull M element, @NonNull TemporalSupplier<T> temporalSupplier) {
-        Objects.requireNonNull(element, "ExpectedPackage::extract - element is null");
-        Objects.requireNonNull(temporalSupplier, "ExpectedPackage::extract - temporalSupplier is null");
+        Objects.requireNonNull(element, "ExpectedPackage::supply - element is null");
+        Objects.requireNonNull(temporalSupplier, "ExpectedPackage::supply - temporalSupplier is null");
         return new ExpectedPackage<M,T>() {
             @Override @NonNull public M getElement() { return element; }
             @Override @NonNull public T getTick() { return Objects.requireNonNull(temporalSupplier.get(), "ExpectedPackage::getTick - result is null"); }
@@ -58,6 +58,7 @@ public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<
      * @return package
      */
     @NonNull static <M,T extends TemporalAccessor> ExpectedPackage<M,T> extract(@NonNull M element, @NonNull TemporalExtractor<M,T> extractor) {
+        Objects.requireNonNull(element, "ExpectedPackage::extract - element is null");
         Objects.requireNonNull(extractor, "ExpectedPackage::extract - extractor is null");
         return supply(element, () -> extractor.apply(element));
     }
