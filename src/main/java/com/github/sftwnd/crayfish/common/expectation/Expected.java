@@ -7,37 +7,43 @@ import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 import java.util.Comparator;
 
-import static java.util.Optional.ofNullable;
-
 /**
- * This interface describes "scheduled" objects.
- * An Object has a specific point in time, which describes when to perform / performed any action with it.
- * @param <T> time marker type
+ * An object that has a tick: the point in time when something is due to happen with the object, or happened.
+ * <p>
+ * A tick may be of any {@link TemporalAccessor} type that can be converted to an {@link Instant}: {@code Instant},
+ * {@link java.time.ZonedDateTime}, {@link java.time.OffsetDateTime}, ... The ticks are compared as instants, so that an
+ * {@code Instant} and a {@code ZonedDateTime} of the same moment are equal. A tick without an instant, such as a
+ * {@link java.time.LocalDateTime} or a {@link java.time.LocalDate}, makes {@link #happened()} and the comparisons throw
+ * a {@link java.time.DateTimeException}; the packages of {@link ExpectedPackage} reject such a tick at the packaging.
+ *
+ * @param <T> the type of the tick
  */
 @FunctionalInterface
 public interface Expected<T extends TemporalAccessor> {
 
     /**
-     * Get the point in time associated with an object.
-     * @return time moment
+     * Returns the tick of the object.
+     *
+     * @return the tick, not null
      */
     @NonNull T getTick();
 
     /**
-     * Identification that a point in time has passed to a specified point in time.
-     * If not specified, then currently
+     * Tells whether the tick has come by a moment: whether the tick is not after the moment.
      *
-     * @param tick point in time at which the check is made
-     * @return confirmation of the time moment
+     * @param moment the moment, or {@code null} for the current time
+     * @return {@code true} if the tick is not after the moment
+     * @throws java.time.DateTimeException if the tick or the moment cannot be converted to an {@link Instant}
      */
-    default boolean happened(TemporalAccessor tick) {
-        return compareTemporalAccessor(getTick(), ofNullable(tick).orElseGet(Instant::now)) <= 0;
+    default boolean happened(@Nullable TemporalAccessor moment) {
+        return compareTemporalAccessor(getTick(), moment != null ? moment : Instant.now()) <= 0;
     }
 
     /**
-     * Identification that a point in time has arrived at the current point in time.
+     * Tells whether the tick has come by now: whether the tick is not after the current time.
      *
-     * @return confirmation of the time moment
+     * @return {@code true} if the tick is not after the current time
+     * @throws java.time.DateTimeException if the tick cannot be converted to an {@link Instant}
      */
     default boolean happened() {
         return happened(null);
@@ -82,10 +88,13 @@ public interface Expected<T extends TemporalAccessor> {
     }
 
     /**
-     * Comparison of 2 points in time
-     * @param first first compared moment
-     * @param second second compared moment
-     * @return comparison result
+     * Compares two moments as instants.
+     *
+     * @param first the first moment
+     * @param second the second moment
+     * @return a negative number, zero or a positive number as the first moment is before, at or after the second
+     * @throws NullPointerException if a moment is null
+     * @throws java.time.DateTimeException if a moment cannot be converted to an {@link Instant}
      */
     static int compareTemporalAccessor(@NonNull TemporalAccessor first, @NonNull TemporalAccessor second) {
         return Instant.from(first).compareTo(Instant.from(second));

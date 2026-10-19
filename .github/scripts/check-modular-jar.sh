@@ -23,6 +23,10 @@ for line in "$MODULE@" \
             "requires com.github.spotbugs.annotations static"; do
     grep -qF -- "$line" <<< "$DESCRIPTOR" || fail "no '$line' in the module descriptor"
 done
+# exported, not open
+if grep -qE 'module-info\.class open$' <<< "$DESCRIPTOR"; then
+    fail "the module is open"
+fi
 
 EXPECTED="ExpectedPackage(1970-01-01T00:00:00Z,check)"
 mkdir -p "$WORK/modular/expectation.check/expectation/check" "$WORK/plain/expectation/check" "$WORK/plain/out"
