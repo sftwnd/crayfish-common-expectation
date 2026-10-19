@@ -1,0 +1,4 @@
+# the line endings of the scripts, whatever core.autocrlf says: batch files of Windows with CRLF, shell scripts with LF
+*.cmd text eol=crlf
+mvnw text eol=lf
+*.sh text eol=lf

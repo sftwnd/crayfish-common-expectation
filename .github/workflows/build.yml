@@ -34,6 +34,31 @@ jobs:
       - name: Build and test
         run: ./mvnw -B -ntp verify
 
+  windows:
+    name: Windows
+    runs-on: windows-latest
+    timeout-minutes: 20
+    steps:
+      # the line endings of the checkout come from .gitattributes only
+      - name: No conversion of the line endings by git
+        run: git config --global core.autocrlf false
+      - uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+      - name: Check the line endings of the scripts
+        shell: bash
+        run: |
+          git ls-files --eol mvnw mvnw.cmd .github/scripts/check-modular-jar.sh
+          git ls-files --eol mvnw.cmd | grep -q 'w/crlf' || { echo "mvnw.cmd is not checked out with CRLF"; exit 1; }
+          git ls-files --eol mvnw | grep -q 'w/lf' || { echo "mvnw is not checked out with LF"; exit 1; }
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: '21'
+          cache: maven
+      - name: Build and test with mvnw.cmd
+        run: .\mvnw.cmd -B -ntp verify
+
   module:
     name: Modular jar
     runs-on: ubuntu-latest
