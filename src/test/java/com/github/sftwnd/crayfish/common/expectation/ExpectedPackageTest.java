@@ -1,7 +1,5 @@
-package com.github.sftwnd.crayfish.common.expectation.test;
+package com.github.sftwnd.crayfish.common.expectation;
 
-import com.github.sftwnd.crayfish.common.expectation.Expected;
-import com.github.sftwnd.crayfish.common.expectation.ExpectedPackage;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
