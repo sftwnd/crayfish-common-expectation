@@ -60,5 +60,19 @@ Construct package from element with time marker extracted from element
     ...
 ```
 
+## Building
+
+The project builds with the Maven Wrapper (Maven 3.10.0) on JDK 8 to 25:
+
+```shell
+./mvnw verify
+```
+
+The classes are compiled for Java 8 on every JDK; the module descriptor is built on JDK 9+ only, so a release has to be
+built on JDK 9+. On JDK 11+ the build runs SpotBugs, and a finding fails it.
+
+Two builds of the same sources give the same jars byte for byte: `project.build.outputTimestamp` gives their entries a
+fixed time, which `release:prepare` sets to the time of the release.
+
 ---
 Copyright © 2017-2023 Andrey D. Shindarev. All rights reserved.
