@@ -6,18 +6,20 @@ import java.time.temporal.TemporalAccessor;
 import java.util.function.Function;
 
 /**
- * Extract Nonnull time-specific value from nonnull element
- * @param <E> element type
- * @param <T> time-specific type
+ * A function that gives the tick of an element, not null: the tick of
+ * {@link ExpectedPackage#extract(Object, TemporalExtractor)}.
+ *
+ * @param <E> the type of the element
+ * @param <T> the type of the tick
  */
 @FunctionalInterface
 public interface TemporalExtractor<E,T extends TemporalAccessor> extends Function<E,T> {
 
     /**
-     * Applies this function to the given argument for time extraction
+     * Returns the tick of an element.
      *
-     * @param element source element
-     * @return the time-specific result from the element
+     * @param element the element, not null
+     * @return the tick, not null
      */
     @Override @NonNull T apply(@NonNull E element);
 

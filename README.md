@@ -110,7 +110,8 @@ module my.application {
 ```
 
 The module descriptor is in `META-INF/versions/9` of the multi-release jar, so Java 8 ignores it. The sources jar has
-its source at the same place.
+its source at the same place. The package is exported, not open: the implementation classes of the packages and of the
+order are not public, and a framework that needs deep reflection on them needs `--add-opens`.
 
 ## Building
 

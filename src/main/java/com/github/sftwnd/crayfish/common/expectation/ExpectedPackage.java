@@ -7,15 +7,21 @@ import java.time.temporal.TemporalAccessor;
 import java.util.Objects;
 
 /**
- * Packing an object into a package, where a temporary marker is attached to the element
- * @param <M> type of marked object
- * @param <T> time marker type
+ * An element with a tick: an {@link Expected} that carries an object.
+ * <p>
+ * {@link #pack}, {@link #supply} and {@link #extract} make immutable packages of an element and a tick: the tick is
+ * taken once, at the packaging, and checked there to be not null and to have an instant; two such packages of equal
+ * elements and equal ticks are equal. Another implementation of the interface has an equality of its own.
+ *
+ * @param <M> the type of the element
+ * @param <T> the type of the tick
  */
 public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<T> {
 
     /**
-     * Packed item
-     * @return item
+     * Returns the element of the package.
+     *
+     * @return the element, not null
      */
     @NonNull M getElement();
 
