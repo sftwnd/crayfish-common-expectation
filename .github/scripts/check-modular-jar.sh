@@ -20,13 +20,9 @@ DESCRIPTOR=$("$JAVA_HOME/bin/jar" --describe-module --file "$JAR" --release 9)
 echo "$DESCRIPTOR"
 for line in "$MODULE@" \
             "exports com.github.sftwnd.crayfish.common.expectation" \
-            "requires com.github.spotbugs.annotations transitive"; do
+            "requires com.github.spotbugs.annotations static"; do
     grep -qF -- "$line" <<< "$DESCRIPTOR" || fail "no '$line' in the module descriptor"
 done
-
-# the runtime dependencies of the jar (spotbugs-annotations and jsr305)
-mvn -B -ntp -q dependency:build-classpath -Dmdep.includeScope=runtime -Dmdep.outputFile="$WORK/deps.txt"
-DEPS=$(cat "$WORK/deps.txt")
 
 EXPECTED="ExpectedPackage(1970-01-01T00:00:00Z,check)"
 mkdir -p "$WORK/modular/expectation.check/expectation/check" "$WORK/plain/expectation/check" "$WORK/plain/out"
@@ -64,18 +60,18 @@ public class Main {
 }
 JAVA
 
-# a named module on the module path
-"$JAVA_HOME/bin/javac" -d "$WORK/modular/out" --module-path "$JAR:$DEPS" \
+# a named module on the module path, without the optional spotbugs annotations
+"$JAVA_HOME/bin/javac" -d "$WORK/modular/out" --module-path "$JAR" \
     --module-source-path "$WORK/modular" --module expectation.check
-OUT=$("$JAVA_HOME/bin/java" --module-path "$JAR:$DEPS:$WORK/modular/out/expectation.check" \
+OUT=$("$JAVA_HOME/bin/java" --module-path "$JAR:$WORK/modular/out/expectation.check" \
     --module expectation.check/expectation.check.Main)
 echo "module path: $OUT"
 [[ "$OUT" = "$MODULE named $EXPECTED" ]] || fail "expected '$MODULE named $EXPECTED' on the module path"
 
 # Java 8 ignores the descriptor
 if [[ -n "$JAVA8_HOME" ]]; then
-    "$JAVA8_HOME/bin/javac" -d "$WORK/plain/out" -cp "$JAR:$DEPS" "$WORK/plain/expectation/check/Main.java"
-    OUT=$("$JAVA8_HOME/bin/java" -cp "$JAR:$DEPS:$WORK/plain/out" expectation.check.Main)
+    "$JAVA8_HOME/bin/javac" -d "$WORK/plain/out" -cp "$JAR" "$WORK/plain/expectation/check/Main.java"
+    OUT=$("$JAVA8_HOME/bin/java" -cp "$JAR:$WORK/plain/out" expectation.check.Main)
     echo "class path: $OUT"
     [[ "$OUT" == 1.8.* && "$OUT" == *" $EXPECTED" ]] || fail "expected '$EXPECTED' on the class path of Java 8"
 fi
