@@ -1,8 +1,8 @@
 package com.github.sftwnd.crayfish.common.expectation;
 
 import edu.umd.cs.findbugs.annotations.NonNull;
+import edu.umd.cs.findbugs.annotations.Nullable;
 
-import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 import java.util.Objects;
 
@@ -20,56 +20,68 @@ public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<
     @NonNull M getElement();
 
     /**
-     * Packing an element into a package with a specified time
-     * @param element item
-     * @param tick time marker
-     * @param <M> type of packed object
-     * @param <T> time marker type
-     * @return package
+     * Packs an element with a tick.
+     *
+     * @param element the element
+     * @param tick the tick
+     * @param <M> the type of the element
+     * @param <T> the type of the tick
+     * @return an immutable package of the element and the tick, equal to another package of {@code pack},
+     * {@code supply} or {@code extract} of an equal element and an equal tick
+     * @throws NullPointerException if the element or the tick is null
+     * @throws java.time.DateTimeException if the tick cannot be converted to an {@link java.time.Instant}
      */
     @NonNull static <M,T extends TemporalAccessor> ExpectedPackage<M,T> pack(@NonNull M element, @NonNull T tick) {
-        return supply(element, () -> tick);
+        Objects.requireNonNull(element, "ExpectedPackage::pack - element is null");
+        Objects.requireNonNull(tick, "ExpectedPackage::pack - tick is null");
+        return new SimpleExpectedPackage<>(element, tick);
     }
 
     /**
-     * Packing an element into a package with the construction of a time marker at the time of packaging
-     * @param element item
-     * @param temporalSupplier time marker construction supplier
-     * @param <M> type of packed object
-     * @param <T> time marker type
-     * @return package
+     * Packs an element with the tick of a supplier, which is called once, at the packaging.
+     *
+     * @param element the element
+     * @param temporalSupplier the supplier of the tick
+     * @param <M> the type of the element
+     * @param <T> the type of the tick
+     * @return an immutable package of the element and the tick, as that of {@link #pack(Object, TemporalAccessor)}
+     * @throws NullPointerException if the element or the supplier is null, or the supplier gives a null tick
+     * @throws java.time.DateTimeException if the tick cannot be converted to an {@link java.time.Instant}
      */
     @NonNull static <M,T extends TemporalAccessor> ExpectedPackage<M,T> supply(@NonNull M element, @NonNull TemporalSupplier<T> temporalSupplier) {
         Objects.requireNonNull(element, "ExpectedPackage::supply - element is null");
         Objects.requireNonNull(temporalSupplier, "ExpectedPackage::supply - temporalSupplier is null");
-        return new ExpectedPackage<M,T>() {
-            @Override @NonNull public M getElement() { return element; }
-            @Override @NonNull public T getTick() { return Objects.requireNonNull(temporalSupplier.get(), "ExpectedPackage::getTick - result is null"); }
-            @Override public String toString() { return ExpectedPackage.toString(this); }
-        };
+        return new SimpleExpectedPackage<>(element, Objects.requireNonNull(temporalSupplier.get(), "ExpectedPackage::supply - temporalSupplier gave a null tick"));
     }
 
     /**
-     * Packing an element into a package with the construction of a time marker from the item at the time of packaging
-     * @param element item
-     * @param extractor function of constructing a time marker from an element
-     * @param <M> type of packed object
-     * @param <T> time marker type
-     * @return package
+     * Packs an element with the tick that an extractor gives for the element, once, at the packaging.
+     *
+     * @param element the element
+     * @param extractor the extractor of the tick from the element
+     * @param <M> the type of the element
+     * @param <T> the type of the tick
+     * @return an immutable package of the element and the tick, as that of {@link #pack(Object, TemporalAccessor)}
+     * @throws NullPointerException if the element or the extractor is null, or the extractor gives a null tick
+     * @throws java.time.DateTimeException if the tick cannot be converted to an {@link java.time.Instant}
      */
     @NonNull static <M,T extends TemporalAccessor> ExpectedPackage<M,T> extract(@NonNull M element, @NonNull TemporalExtractor<M,T> extractor) {
         Objects.requireNonNull(element, "ExpectedPackage::extract - element is null");
         Objects.requireNonNull(extractor, "ExpectedPackage::extract - extractor is null");
-        return supply(element, () -> extractor.apply(element));
+        return new SimpleExpectedPackage<>(element, Objects.requireNonNull(extractor.apply(element), "ExpectedPackage::extract - extractor gave a null tick"));
     }
 
     /**
-     * Returns a String object representing the specified integer. The argument is converted to signed
-     * @param expectedPackage - an expected package to be converted
-     * @return string representation of the argument
+     * Returns the text of a package, {@code ExpectedPackage(<tick>,<element>)}: the tick as an {@link java.time.Instant} if it
+     * can be converted to one, and as it is otherwise. It is the text of the packages of {@code pack}, {@code supply}
+     * and {@code extract}; it calls only {@code getTick()} and {@code getElement()} of another package.
+     *
+     * @param expectedPackage the package
+     * @return the text of the package, or {@code "null"} for a null package
      */
-    static String toString(ExpectedPackage<?,?> expectedPackage) {
-        return String.format("ExpectedPackage(%s,%s)", Instant.from(expectedPackage.getTick()), expectedPackage.getElement());
+    static String toString(@Nullable ExpectedPackage<?,?> expectedPackage) {
+        return expectedPackage == null ? "null"
+                : SimpleExpectedPackage.format(SimpleExpectedPackage.moment(expectedPackage.getTick()), expectedPackage.getElement());
     }
 
 }

@@ -14,7 +14,7 @@ a moment to any element.**
 
 An `Expected` has a tick, a point in time of any `java.time` type that converts to an `Instant` (`Instant`,
 `ZonedDateTime`, `OffsetDateTime`, …), and knows whether it has happened. An `ExpectedPackage` attaches a tick to an
-element: a fixed one, one supplied at every call or one extracted from the element.
+element: a given one, one of a supplier or one extracted from the element, taken once, at the packaging.
 
 ## Features
 
@@ -26,7 +26,8 @@ element: a fixed one, one supplied at every call or one extracted from the eleme
   order that does not change while they live: a total order, and a sorted set keeps every distinct object of a tick;
   `null` first
 - **Packages** — `ExpectedPackage.pack`, `supply` and `extract` attach a tick to an element without a class of
-  its own
+  its own: immutable, equal if their elements and ticks are equal; a null or a tick without an instant
+  (`LocalDateTime`, `LocalDate`, …) is rejected at the packaging
 - **Functional interfaces** — `Expected`, `TemporalSupplier` and `TemporalExtractor` are lambdas
 - **Zero runtime dependencies** — the SpotBugs annotations of the API are optional, needed neither to compile against
   the library nor to run it
@@ -81,7 +82,7 @@ A package of an element with a time marker:
     ...
 ```
 
-A package of an element with a time marker from a supplier, called at every `getTick()`:
+A package of an element with a time marker from a supplier, called once, at the packaging:
 
 ```java
     @NonNull
@@ -89,7 +90,7 @@ A package of an element with a time marker from a supplier, called at every `get
     ...
 ```
 
-A package of an element with a time marker extracted from the element, at every `getTick()`:
+A package of an element with a time marker extracted from the element, once, at the packaging:
 
 ```java
     @NonNull
