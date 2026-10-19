@@ -1,26 +1,59 @@
-[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=sftwnd_crayfish_common_expectation&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=sftwnd_crayfish_common_expectation) [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=sftwnd_crayfish_common_expectation&metric=coverage)](https://sonarcloud.io/summary/new_code?id=sftwnd_crayfish_common_expectation) [![build](https://github.com/sftwnd/crayfish-common-expectation/actions/workflows/build.yml/badge.svg?branch=develop)](https://github.com/sftwnd/crayfish-common-expectation/actions/workflows/build.yml) [![License](https://img.shields.io/github/license/sftwnd/crayfish-common-expectation)](https://github.com/sftwnd/crayfish-common-expectation/blob/master/LICENSE)
-
 # Crayfish Common Expectation
 
-Expectation object for time-based marker creation &amp; packaging with it
+[![Maven Central](https://img.shields.io/maven-central/v/com.github.sftwnd.crayfish.common/crayfish-common-expectation)](https://central.sonatype.com/artifact/com.github.sftwnd.crayfish.common/crayfish-common-expectation)
+[![Java 8+](https://img.shields.io/badge/Java-8%2B-blue)](#java-modules)
+[![JPMS](https://img.shields.io/badge/JPMS-named%20module-blue)](#java-modules)
+[![javadoc](https://javadoc.io/badge2/com.github.sftwnd.crayfish.common/crayfish-common-expectation/javadoc.svg)](https://javadoc.io/doc/com.github.sftwnd.crayfish.common/crayfish-common-expectation)
+[![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=sftwnd_crayfish_common_expectation&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=sftwnd_crayfish_common_expectation)
+[![Coverage](https://sonarcloud.io/api/project_badges/measure?project=sftwnd_crayfish_common_expectation&metric=coverage)](https://sonarcloud.io/summary/new_code?id=sftwnd_crayfish_common_expectation)
+[![Build](https://github.com/sftwnd/crayfish-common-expectation/actions/workflows/build.yml/badge.svg)](https://github.com/sftwnd/crayfish-common-expectation/actions/workflows/build.yml)
+[![License](https://img.shields.io/github/license/sftwnd/crayfish-common-expectation)](https://github.com/sftwnd/crayfish-common-expectation/blob/master/LICENSE)
 
-## Java versions
+**Zero-dependency time markers for Java 8+: objects that know the moment they are due, and packages that attach such
+a moment to any element.**
 
-The library runs on Java 8 and later: the classes are Java 8 bytecode. On Java 9+ the jar is the named module
-`com.github.sftwnd.crayfish_common_expectation` (the module descriptor is in `META-INF/versions/9` of a multi-release
-jar), which exports `com.github.sftwnd.crayfish.common.expectation`:
+An `Expected` has a tick, a point in time of any `java.time` type that converts to an `Instant` (`Instant`,
+`ZonedDateTime`, `OffsetDateTime`, …), and knows whether it has happened. An `ExpectedPackage` attaches a tick to an
+element: a fixed one, one supplied at every call or one extracted from the element.
 
-```java
-module my.application {
-    requires com.github.sftwnd.crayfish_common_expectation;
-}
+## Features
+
+- **Any `java.time` moment** — ticks of different types are compared as instants: an `Instant` and a `ZonedDateTime`
+  of the same moment are equal
+- **Happened or not** — `happened()` against the current time, `happened(tick)` against any moment
+- **Ordering** — `Expected.comparator(...)` orders by the tick, then by the given comparator or, without one, by the
+  natural order of `Comparable` objects of the same class; `null` first
+- **Packages** — `ExpectedPackage.pack`, `supply` and `extract` attach a tick to an element without a class of
+  its own
+- **Functional interfaces** — `Expected`, `TemporalSupplier` and `TemporalExtractor` are lambdas
+- **Zero runtime dependencies** — the SpotBugs annotations of the API are optional, needed neither to compile against
+  the library nor to run it
+- **Java 8+, JPMS** — Java 8 bytecode, a named module on Java 9+, see [Java modules](#java-modules)
+
+## Installation
+
+Maven:
+
+```xml
+<dependency>
+    <groupId>com.github.sftwnd.crayfish.common</groupId>
+    <artifactId>crayfish-common-expectation</artifactId>
+    <version>1.4.0</version>
+</dependency>
 ```
 
-The build and the tests run on JDK 8, 11, 17, 21 and 25.
+Gradle:
 
-## Expected Interface
+```groovy
+implementation 'com.github.sftwnd.crayfish.common:crayfish-common-expectation:1.4.0'
+```
 
-Expected Interface realize object nonnull time-marker
+1.3.x requires Java 11; 1.4.0 runs on Java 8 again, as 1.2.0 and earlier did, and is the same named module on Java 9+
+as 1.3.x.
+
+## Expected
+
+An object with a non-null time marker:
 
 ```java
 public interface Expected<T extends TemporalAccessor> {
@@ -28,9 +61,9 @@ public interface Expected<T extends TemporalAccessor> {
     default boolean happened(TemporalAccessor tick)...
 ```
 
-## Class ExpectedPackage
+## ExpectedPackage
 
-Used to link object and time-marker. Implements Expected Interface
+Links an element and a time marker; an `ExpectedPackage` is an `Expected`:
 
 ```java
 public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<T> {
@@ -38,7 +71,7 @@ public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<
     ...
 ```
 
-Construct package from element with time marker
+A package of an element with a time marker:
 
 ```java
     @NonNull
@@ -46,19 +79,35 @@ Construct package from element with time marker
     ...
 ```
 
-Construct package from element with time marker from time-marker supplier
+A package of an element with a time marker from a supplier, called at every `getTick()`:
 
 ```java
-   static <M,T extends TemporalAccessor> ExpectedPackage<M,T> supply(@NonNull M element, @NonNull TimeSupplier<T> tick)
-   ...
-```
-
-Construct package from element with time marker extracted from element
-
-```java
-    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> extract(@NonNull M element, @NonNull TimeExtractor<M,T> extractor) {
+    @NonNull
+    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> supply(@NonNull M element, @NonNull TemporalSupplier<T> temporalSupplier)
     ...
 ```
+
+A package of an element with a time marker extracted from the element, at every `getTick()`:
+
+```java
+    @NonNull
+    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> extract(@NonNull M element, @NonNull TemporalExtractor<M,T> extractor)
+    ...
+```
+
+## Java modules
+
+The library runs on Java 8+: the classes are Java 8 bytecode. On Java 9+ it is the named module
+`com.github.sftwnd.crayfish_common_expectation`, which exports the package `com.github.sftwnd.crayfish.common.expectation`:
+
+```java
+module my.application {
+    requires com.github.sftwnd.crayfish_common_expectation;
+}
+```
+
+The module descriptor is in `META-INF/versions/9` of the multi-release jar, so Java 8 ignores it. The sources jar has
+its source at the same place.
 
 ## Building
 
@@ -75,4 +124,5 @@ Two builds of the same sources give the same jars byte for byte: `project.build.
 fixed time, which `release:prepare` sets to the time of the release.
 
 ---
-Copyright © 2017-2023 Andrey D. Shindarev. All rights reserved.
+
+Copyright © 2017-2026 Andrey D. Shindarev. All rights reserved.
