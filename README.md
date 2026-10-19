@@ -139,8 +139,8 @@ The project builds with the Maven Wrapper (Maven 3.10.0) on JDK 8 to 25:
 ```
 
 The classes are compiled for Java 8 on every JDK; the module descriptor is built on JDK 9+ only, so a release has to be
-built on JDK 9+. On JDK 11+ the build runs SpotBugs, and a finding fails it. The tests have to cover every instruction
-and every branch of the classes: JaCoCo fails the build otherwise.
+built on JDK 9+. On JDK 11+ the build runs SpotBugs, and a finding fails it. The tests have to cover at least 90% of the
+instructions and of the branches of the classes: JaCoCo fails the build otherwise.
 
 Two builds of the same sources with the same version of the JDK give the same jars byte for byte:
 `project.build.outputTimestamp` gives their entries a fixed time, which `release:prepare` sets to the time of the
