@@ -13,6 +13,7 @@ import static java.util.Optional.ofNullable;
 /**
  * This interface describes "scheduled" objects.
  * An Object has a specific point in time, which describes when to perform / performed any action with it.
+ * @param <T> time marker type
  */
 @FunctionalInterface
 public interface Expected<T extends TemporalAccessor> {

@@ -4,7 +4,7 @@
 
     <groupId>com.github.sftwnd.crayfish.common</groupId>
     <artifactId>crayfish-common-expectation</artifactId>
-    <version>1.3.1</version>
+    <version>1.4.0-SNAPSHOT</version>
 
     <name>CrayFish :: COMMON :: Expectation</name>
     <description>
@@ -33,7 +33,7 @@
         <url>https://github.com.github.sftwnd/crayfish-common-expectation</url>
         <connection>scm:git:https://github.com/sftwnd/crayfish-common-expectation.git</connection>
         <developerConnection>scm:git:git@github.com:sftwnd/crayfish-common-expectation.git</developerConnection>
-        <tag>crayfish-common-expectation-1.3.1</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <distributionManagement>
@@ -51,18 +51,29 @@
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>11</java.version>
+        <!-- the classes are Java 8 bytecode on every JDK: on JDK 9+ the profile release-8-on-jdk9+ compiles them with
+             release 8 and adds the module descriptor for Java 9 -->
+        <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
+        <javaModuleName>com.github.sftwnd.crayfish_common_expectation</javaModuleName>
         <spotbugs-annotations.version>4.7.3</spotbugs-annotations.version>
         <junit.version>5.9.2</junit.version>
-        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
-        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
-        <maven-javadoc-plugin.version>3.5.0</maven-javadoc-plugin.version>
+        <!-- 3.11.0+: compileSourceRoots can be configured, for the module descriptor in src/main/java9 -->
+        <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+        <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
+        <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
+        <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
+        <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
         <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
         <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
         <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-        <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
+        <!-- the agent has to know the class files of the JDK the tests run on (up to JDK 25) -->
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+        <!-- the sources jar is built by maven-jar-plugin (the execution attach-sources) from the sources of
+             src/main/java and src/main/java9; maven-source-plugin, which the release profile of the super POM of
+             Maven 3.9 runs with -DperformRelease=true, is skipped, so that it attaches no sources jar of its own -->
+        <maven.source.skip>true</maven.source.skip>
     </properties>
 
     <dependencies>
@@ -91,25 +102,65 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
                     <compilerArgs>
                         <arg>-Xlint:all</arg>
-                        <arg>-Xlint:-requires-automatic</arg>
                         <arg>-Xlint:-processing</arg>
+                        <!-- JDK 21+ reports Java 8 as an obsolete target; Java 8 stays the target of the library -->
+                        <arg>-Xlint:-options</arg>
                     </compilerArgs>
                     <showWarnings>true</showWarnings>
                 </configuration>
             </plugin>
             <plugin>
+                <!-- the sources of the sources jar, which mirrors the multi-release jar: those of src/main/java at the
+                     root, those of src/main/java9 in META-INF/versions/9 (copied in the profile release-8-on-jdk9+,
+                     which compiles them) -->
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
+                <artifactId>maven-resources-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>copy-sources</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/sources</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/src/main/java</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <manifestEntries>
+                            <!-- the name of the module of a jar built on JDK 8, which has no module descriptor -->
+                            <Automatic-Module-Name>${javaModuleName}</Automatic-Module-Name>
+                            <Multi-Release>true</Multi-Release>
+                        </manifestEntries>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <!-- the sources jar of the sources copied by maven-resources-plugin -->
                         <id>attach-sources</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                        <configuration>
+                            <classifier>sources</classifier>
+                            <classesDirectory>${project.build.directory}/sources</classesDirectory>
+                            <!-- the default manifest, not that of the jar -->
+                            <archive combine.self="override" />
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -117,7 +168,7 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
+                    <source>8</source>
                 </configuration>
                 <executions>
                     <execution>
@@ -169,8 +220,18 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
-                    <artifactId>maven-source-plugin</artifactId>
-                    <version>${maven-source-plugin.version}</version>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>${maven-enforcer-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${maven-resources-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -203,6 +264,68 @@
 
     <profiles>
         <profile>
+            <!-- compile against the Java 8 API on JDK 9+ (-source/-target alone do not check the API) -->
+            <id>release-8-on-jdk9+</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!-- the module descriptor, compiled for Java 9 into META-INF/versions/9: a named module on
+                             Java 9+, while Java 8 ignores it (a build on JDK 8 produces a jar without it) -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>compile-module-info</id>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <release>9</release>
+                                    <multiReleaseOutput>true</multiReleaseOutput>
+                                    <compileSourceRoots>
+                                        <compileSourceRoot>${project.basedir}/src/main/java9</compileSourceRoot>
+                                    </compileSourceRoots>
+                                    <compilerArgs combine.children="append">
+                                        <!-- spotbugs-annotations is an automatic module -->
+                                        <arg>-Xlint:-requires-automatic</arg>
+                                    </compilerArgs>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <!-- the sources of src/main/java9 in the sources jar, in META-INF/versions/9 as their classes
+                             in the jar -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-sources-9</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/sources/META-INF/versions/9</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${project.basedir}/src/main/java9</directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
             <id>sign-artifacts</id>
             <activation>
                 <property>
@@ -212,6 +335,27 @@
             </activation>
             <build>
                 <plugins>
+                    <plugin>
+                        <!-- a jar built on JDK 8 has no module descriptor -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>release-on-jdk9+</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireJavaVersion>
+                                            <version>[9,)</version>
+                                            <message>A release has to be built on JDK 9+, so that the jar contains the module descriptor</message>
+                                        </requireJavaVersion>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
                     <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
