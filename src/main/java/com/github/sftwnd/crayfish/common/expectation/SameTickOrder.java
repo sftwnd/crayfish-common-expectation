@@ -1,7 +1,5 @@
 package com.github.sftwnd.crayfish.common.expectation;
 
-import java.util.Arrays;
-
 /**
  * The order of {@link Expected#comparator(java.util.Comparator)} for the objects of the same tick, when no comparator
  * of the objects is given: a total order, in which two distinct objects are equal only by the natural order of their
@@ -12,14 +10,13 @@ final class SameTickOrder {
     // the order of the classes, and of the objects of a class that is not compared by its natural order
     private static final IdentityOrder IDENTITY = new IdentityOrder();
 
-    // whether a class is comparable with itself: it has a public compareTo that accepts the class, and not only that
-    // of a Comparable of another type, whose bridge method would throw a ClassCastException
+    // whether a class is comparable with itself: the type argument of its Comparable is the class or a supertype of
+    // it, so that compareTo accepts its objects; the bridge method of a Comparable of another type would throw a
+    // ClassCastException, whatever overloads of compareTo the class has
     private static final ClassValue<Boolean> COMPARABLE = new ClassValue<Boolean>() {
         @Override
         protected Boolean computeValue(Class<?> type) {
-            return Comparable.class.isAssignableFrom(type) && Arrays.stream(type.getMethods())
-                    .anyMatch(method -> "compareTo".equals(method.getName()) && !method.isBridge()
-                            && method.getParameterCount() == 1 && method.getParameterTypes()[0].isAssignableFrom(type));
+            return Comparable.class.isAssignableFrom(type) && ComparableArgument.of(type).isAssignableFrom(type);
         }
     };
 
