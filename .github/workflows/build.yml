@@ -23,10 +23,10 @@ jobs:
       matrix:
         java: [ '8', '11', '17', '21', '25' ]
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-java@v6
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: ${{ matrix.java }}
@@ -42,7 +42,7 @@ jobs:
       # the line endings of the checkout come from .gitattributes only
       - name: No conversion of the line endings by git
         run: git config --global core.autocrlf false
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
       - name: Check the line endings of the scripts
@@ -51,7 +51,7 @@ jobs:
           git ls-files --eol mvnw mvnw.cmd .github/scripts/check-modular-jar.sh
           git ls-files --eol mvnw.cmd | grep -q 'w/crlf' || { echo "mvnw.cmd is not checked out with CRLF"; exit 1; }
           git ls-files --eol mvnw | grep -q 'w/lf' || { echo "mvnw is not checked out with LF"; exit 1; }
-      - uses: actions/setup-java@v6
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           java-version: '21'
@@ -64,10 +64,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           persist-credentials: false
-      - uses: actions/setup-java@v6
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         with:
           distribution: temurin
           # the last one is the default: the jar is built on JDK 21, and Java 8 runs a consumer on the class path
@@ -92,20 +92,20 @@ jobs:
       - name: Skip without the secret SONAR_TOKEN
         if: env.SONAR_TOKEN == ''
         run: echo "::notice::The secret SONAR_TOKEN is not set, the analysis is skipped"
-      - uses: actions/checkout@v7
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         if: env.SONAR_TOKEN != ''
         with:
           # the whole history, for the blame information of the analysis
           fetch-depth: 0
           persist-credentials: false
-      - uses: actions/setup-java@v6
+      - uses: actions/setup-java@b843ebf9b913146b38da2eaa7aeddf76074ae1ad # v6.1.0
         if: env.SONAR_TOKEN != ''
         with:
           distribution: temurin
           # the scanner requires Java 21; the classes are still compiled with --release 8
           java-version: '21'
           cache: maven
-      - uses: actions/cache@v6
+      - uses: actions/cache@55cc8345863c7cc4c66a329aec7e433d2d1c52a9 # v6.1.0
         if: env.SONAR_TOKEN != ''
         with:
           path: ~/.sonar/cache
