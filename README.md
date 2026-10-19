@@ -21,7 +21,7 @@ element: a given one, one of a supplier or one extracted from the element, taken
 
 - **Any `java.time` moment** — ticks of different types are compared as instants: an `Instant` and a `ZonedDateTime`
   of the same moment are equal
-- **Happened or not** — `happened()` against the current time, `happened(tick)` against any moment
+- **Happened or not** — `happened()` against the current time, `happened(moment)` against any moment
 - **Ordering** — `Expected.comparator(...)` orders by the tick, then by the given comparator; without one, objects of
   the same tick by the natural order of their class if it is comparable with itself, and otherwise by an arbitrary
   order that does not change while they live: a total order, and a sorted set keeps every distinct object of a tick;
@@ -56,48 +56,115 @@ implementation 'com.github.sftwnd.crayfish.common:crayfish-common-expectation:1.
 1.3.x requires Java 11; 1.4.0 runs on Java 8 again, as 1.2.0 and earlier did, and is the same named module on Java 9+
 as 1.3.x.
 
-## Expected
-
-An object with a non-null time marker:
+## Quick start
 
 ```java
-public interface Expected<T extends TemporalAccessor> {
-    @NonNull T getTick();
-    default boolean happened(TemporalAccessor tick)...
+Instant now = Instant.now();
+// a tick given, a tick of a supplier and a tick extracted from the element: each is taken once, at the packaging
+ExpectedPackage<String, Instant> report = ExpectedPackage.pack("report", now.plus(Duration.ofHours(1)));
+ExpectedPackage<String, ZonedDateTime> backup = ExpectedPackage.supply("backup",
+        () -> ZonedDateTime.now(ZoneId.of("Europe/Moscow")).minusMinutes(5));
+ExpectedPackage<Order, Instant> order = ExpectedPackage.extract(new Order("42", now.plusSeconds(30)), Order::deadline);
+
+report.happened();                                   // false: in an hour
+backup.happened();                                   // true: five minutes ago
+report.happened(now.plus(Duration.ofHours(2)));      // true: by then
+
+// the earliest tick first; ticks of different types are compared as instants
+Queue<ExpectedPackage<?, ?>> queue = new PriorityQueue<>(Expected.comparator(null));
+queue.add(report);
+queue.add(backup);
+queue.add(order);
+while (!queue.isEmpty() && queue.peek().happened()) {
+    System.out.println("due: " + queue.poll().getElement());   // due: backup
+}
+System.out.println("next: " + queue.peek().getElement());      // next: Order 42
 ```
+
+`Order` stands for any class of an application, here with a method `Instant deadline()`.
+
+## Expected
+
+An object with a tick, not null; a functional interface:
+
+```java
+@FunctionalInterface
+public interface Expected<T extends TemporalAccessor> {
+
+    @NonNull T getTick();
+
+    // whether the tick is not after the moment; null is the current time
+    default boolean happened(@Nullable TemporalAccessor moment);
+
+    // whether the tick is not after the current time
+    default boolean happened();
+
+    // the order by the ticks, see below
+    static <M extends Expected<? extends TemporalAccessor>> Comparator<M> comparator(@Nullable Comparator<? super M> objectComparator);
+
+    // two moments compared as instants
+    static int compareTemporalAccessor(@NonNull TemporalAccessor first, @NonNull TemporalAccessor second);
+}
+```
+
+A tick without an instant (`LocalDateTime`, `LocalDate`, …) makes `happened` and the comparisons throw a
+`DateTimeException`.
+
+`Expected.comparator(objectComparator)` orders by the ticks, the earliest first, and puts `null` before every object.
+The objects of the same tick are ordered by `objectComparator`, and its result is final; without it:
+
+- objects of the same class that is comparable with itself (it implements `Comparable` of the class or of a supertype of
+  it, itself or by a superclass or an interface): by their natural order;
+- other objects of the same class: by an arbitrary order of the objects;
+- objects of different classes: by an arbitrary order of their classes.
+
+An arbitrary order does not change while the objects live, and in it an object is equal only to itself: the comparator
+is a total order, and a `TreeSet` or a `PriorityQueue` keeps every distinct object of a tick, unless the natural order of
+its class makes two of them equal.
 
 ## ExpectedPackage
 
-Links an element and a time marker; an `ExpectedPackage` is an `Expected`:
+An element with a tick; an `ExpectedPackage` is an `Expected`:
 
 ```java
-public interface ExpectedPackage<M,T extends TemporalAccessor> extends Expected<T> {
-    @NonNull M getElement(); // Packaged element
-    ...
+public interface ExpectedPackage<M, T extends TemporalAccessor> extends Expected<T> {
+
+    @NonNull M getElement();
+
+    // a package of an element and a tick
+    static <M, T extends TemporalAccessor> ExpectedPackage<M, T> pack(@NonNull M element, @NonNull T tick);
+
+    // a package of an element and the tick of a supplier, called once, at the packaging
+    static <M, T extends TemporalAccessor> ExpectedPackage<M, T> supply(@NonNull M element, @NonNull TemporalSupplier<T> temporalSupplier);
+
+    // a package of an element and the tick that an extractor gives for it, once, at the packaging
+    static <M, T extends TemporalAccessor> ExpectedPackage<M, T> extract(@NonNull M element, @NonNull TemporalExtractor<M, T> extractor);
+
+    // ExpectedPackage(<tick>,<element>), the tick as an Instant if it has one; "null" for a null package
+    static String toString(@Nullable ExpectedPackage<?, ?> expectedPackage);
+}
 ```
 
-A package of an element with a time marker:
+The packages of `pack`, `supply` and `extract` are immutable. At the packaging they reject a null element, supplier,
+extractor or tick with a `NullPointerException` that names the method and the argument, and a tick without an instant
+with a `DateTimeException`. Two of them are equal if their elements and their ticks are equal (by `equals` of the ticks:
+an `Instant` and a `ZonedDateTime` of the same moment are different ticks). Their `toString()` is
+`ExpectedPackage(<instant>,<element>)` and does not throw.
+
+## TemporalSupplier and TemporalExtractor
+
+The functional interfaces of the ticks of `supply` and `extract`, which give ticks that are not null:
 
 ```java
-    @NonNull
-    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> pack(@NonNull M element, @NonNull T tick)
-    ...
-```
+@FunctionalInterface
+public interface TemporalSupplier<T extends TemporalAccessor> extends Supplier<T> {
+    @Override @NonNull T get();
+}
 
-A package of an element with a time marker from a supplier, called once, at the packaging:
-
-```java
-    @NonNull
-    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> supply(@NonNull M element, @NonNull TemporalSupplier<T> temporalSupplier)
-    ...
-```
-
-A package of an element with a time marker extracted from the element, once, at the packaging:
-
-```java
-    @NonNull
-    static <M,T extends TemporalAccessor> ExpectedPackage<M,T> extract(@NonNull M element, @NonNull TemporalExtractor<M,T> extractor)
-    ...
+@FunctionalInterface
+public interface TemporalExtractor<E, T extends TemporalAccessor> extends Function<E, T> {
+    @Override @NonNull T apply(@NonNull E element);
+}
 ```
 
 ## Java modules
