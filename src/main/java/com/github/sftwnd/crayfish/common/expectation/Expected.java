@@ -59,7 +59,8 @@ public interface Expected<T extends TemporalAccessor> {
      *     <li>objects of the same class that is comparable with itself (it implements {@code Comparable} of the class
      *     or of a supertype of it, itself or by a superclass or an interface): by their natural order;</li>
      *     <li>other objects of the same class: by an arbitrary order of the objects;</li>
-     *     <li>objects of different classes: by an arbitrary order of their classes.</li>
+     *     <li>objects of different classes: by the names of their classes, and classes of the same name, of different
+     *     class loaders, by an arbitrary order of the classes.</li>
      * </ul>
      * An arbitrary order does not change while the objects live, and in it an object is equal only to itself: the
      * comparator is a total order, and a sorted set keeps every distinct object of a tick, unless the natural order of

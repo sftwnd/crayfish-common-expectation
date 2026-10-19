@@ -23,9 +23,9 @@ element: a given one, one of a supplier or one extracted from the element, taken
   of the same moment are equal
 - **Happened or not** — `happened()` against the current time, `happened(moment)` against any moment
 - **Ordering** — `Expected.comparator(...)` orders by the tick, then by the given comparator; without one, objects of
-  the same tick by the natural order of their class if it is comparable with itself, and otherwise by an arbitrary
-  order that does not change while they live: a total order, and a sorted set keeps every distinct object of a tick;
-  `null` first
+  the same tick by the natural order of their class if it is comparable with itself, objects of different classes by
+  the names of their classes, and other objects by an arbitrary order that does not change while they live: a total
+  order, and a sorted set keeps every distinct object of a tick; `null` first
 - **Packages** — `ExpectedPackage.pack`, `supply` and `extract` attach a tick to an element without a class of
   its own: immutable, equal if their elements and ticks are equal; a null or a tick without an instant
   (`LocalDateTime`, `LocalDate`, …) is rejected at the packaging
@@ -116,7 +116,8 @@ The objects of the same tick are ordered by `objectComparator`, and its result i
 - objects of the same class that is comparable with itself (it implements `Comparable` of the class or of a supertype of
   it, itself or by a superclass or an interface): by their natural order;
 - other objects of the same class: by an arbitrary order of the objects;
-- objects of different classes: by an arbitrary order of their classes.
+- objects of different classes: by the names of their classes, the same in every run, and classes of the same name, of
+  different class loaders, by an arbitrary order of the classes.
 
 An arbitrary order does not change while the objects live, and in it an object is equal only to itself: the comparator
 is a total order, and a `TreeSet` or a `PriorityQueue` keeps every distinct object of a tick, unless the natural order of

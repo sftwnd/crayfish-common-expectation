@@ -7,7 +7,8 @@ package com.github.sftwnd.crayfish.common.expectation;
  */
 final class SameTickOrder {
 
-    // the order of the classes, and of the objects of a class that is not compared by its natural order
+    // the order of the classes of the same name, and of the objects of a class that is not compared by its natural
+    // order
     private static final IdentityOrder IDENTITY = new IdentityOrder();
 
     // whether a class is comparable with itself: the type argument of its Comparable is the class or a supertype of
@@ -25,8 +26,8 @@ final class SameTickOrder {
 
     /**
      * Compares two objects of the same tick: objects of the same class that is comparable with itself by their natural
-     * order, other objects of the same class by their identity, objects of different classes by the identity of their
-     * classes.
+     * order, other objects of the same class by their identity, objects of different classes by the names of their
+     * classes, and classes of the same name (of different class loaders) by their identity.
      *
      * @param first the first object
      * @param second the second object
@@ -34,8 +35,10 @@ final class SameTickOrder {
      */
     static int compare(Object first, Object second) {
         Class<?> type = first.getClass();
-        if (type != second.getClass()) {
-            return IDENTITY.compare(type, second.getClass());
+        Class<?> otherType = second.getClass();
+        if (type != otherType) {
+            int result = type.getName().compareTo(otherType.getName());
+            return result != 0 ? result : IDENTITY.compare(type, otherType);
         }
         return Boolean.TRUE.equals(COMPARABLE.get(type)) ? natural(first, second) : IDENTITY.compare(first, second);
     }
