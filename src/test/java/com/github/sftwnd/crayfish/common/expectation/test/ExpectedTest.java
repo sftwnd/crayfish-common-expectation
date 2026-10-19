@@ -160,6 +160,15 @@ class ExpectedTest {
     }
 
     @Test
+    void comparatorNaturalOrderOfSupertypesTest() {
+        Comparator<Phase> phases = Expected.comparator(null);
+        assertTrue(phases.compare(Phase.FIRST, Phase.SECOND) < 0, "comparator(null).compare has to order the constants of an enum of a tick by their natural order");
+        Comparator<Ordered> ordered = Expected.comparator(null);
+        assertTrue(ordered.compare(new OrderedExpected(1, instant), new OrderedExpected(2, instant)) < 0, "comparator(null).compare has to use the compareTo of a Comparable interface");
+        assertEquals(0, ordered.compare(new OrderedExpected(1, instant), new OrderedExpected(1, instant)), "comparator(null).compare has to return zero for objects equal by the compareTo of a Comparable interface");
+    }
+
+    @Test
     void comparatorTransitivityTest() {
         Comparator<Expected<Instant>> comparator = Expected.comparator(null);
         // a < b by their natural order, b < c and c < a by their hash codes in the order of 1.3.x
@@ -295,7 +304,7 @@ class ExpectedTest {
         }
     }
 
-    // Comparable with a String, not with itself; its compareTo of two objects is an overload, not that of Comparable
+    // Comparable with a String, not with itself, whose overload compareTo(ComparableToString) is not that of Comparable
     static class ComparableToString implements Expected<Instant>, Comparable<String> {
         final Instant instant;
         ComparableToString(Instant instant) {
@@ -310,8 +319,43 @@ class ExpectedTest {
         public int compareTo(@NonNull String string) {
             throw new UnsupportedOperationException("ComparableToString is not compared with a String in the tests");
         }
-        public int compareTo(ComparableToString first, ComparableToString second) {
-            return first.instant.compareTo(second.instant);
+        public int compareTo(ComparableToString other) {
+            return instant.compareTo(other.instant);
+        }
+    }
+
+    enum Phase implements Expected<Instant> {
+        FIRST, SECOND;
+        @NonNull
+        @Override
+        public Instant getTick() {
+            return Instant.EPOCH;
+        }
+    }
+
+    interface Ordered extends Expected<Instant>, Comparable<Ordered> {
+        int order();
+        @Override
+        default int compareTo(@NonNull Ordered other) {
+            return Integer.compare(order(), other.order());
+        }
+    }
+
+    static class OrderedExpected implements Ordered {
+        final int order;
+        final Instant instant;
+        OrderedExpected(int order, Instant instant) {
+            this.order = order;
+            this.instant = instant;
+        }
+        @Override
+        public int order() {
+            return order;
+        }
+        @NonNull
+        @Override
+        public Instant getTick() {
+            return instant;
         }
     }
 

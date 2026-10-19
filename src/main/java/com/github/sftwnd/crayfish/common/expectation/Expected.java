@@ -56,8 +56,8 @@ public interface Expected<T extends TemporalAccessor> {
      * The objects of the same tick are compared by {@code objectComparator}, and its result is final. Without it the
      * objects of the same tick are ordered:
      * <ul>
-     *     <li>objects of the same class that is comparable with itself (it has a public {@code compareTo} that accepts
-     *     the class): by their natural order;</li>
+     *     <li>objects of the same class that is comparable with itself (it implements {@code Comparable} of the class
+     *     or of a supertype of it, itself or by a superclass or an interface): by their natural order;</li>
      *     <li>other objects of the same class: by an arbitrary order of the objects;</li>
      *     <li>objects of different classes: by an arbitrary order of their classes.</li>
      * </ul>
