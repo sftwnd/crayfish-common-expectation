@@ -6,82 +6,96 @@ import edu.umd.cs.findbugs.annotations.Nullable;
 import java.time.Instant;
 import java.time.temporal.TemporalAccessor;
 import java.util.Comparator;
-import java.util.Optional;
-
-import static java.util.Optional.ofNullable;
 
 /**
- * This interface describes "scheduled" objects.
- * An Object has a specific point in time, which describes when to perform / performed any action with it.
+ * An object that has a tick: the point in time when something is due to happen with the object, or happened.
+ * <p>
+ * A tick may be of any {@link TemporalAccessor} type that can be converted to an {@link Instant}: {@code Instant},
+ * {@link java.time.ZonedDateTime}, {@link java.time.OffsetDateTime}, ... The ticks are compared as instants, so that an
+ * {@code Instant} and a {@code ZonedDateTime} of the same moment are equal. A tick without an instant, such as a
+ * {@link java.time.LocalDateTime} or a {@link java.time.LocalDate}, makes {@link #happened()} and the comparisons throw
+ * a {@link java.time.DateTimeException}; the packages of {@link ExpectedPackage} reject such a tick at the packaging.
+ *
+ * @param <T> the type of the tick
  */
 @FunctionalInterface
 public interface Expected<T extends TemporalAccessor> {
 
     /**
-     * Get the point in time associated with an object.
-     * @return time moment
+     * Returns the tick of the object.
+     *
+     * @return the tick, not null
      */
     @NonNull T getTick();
 
     /**
-     * Identification that a point in time has passed to a specified point in time.
-     * If not specified, then currently
+     * Tells whether the tick has come by a moment: whether the tick is not after the moment.
      *
-     * @param tick point in time at which the check is made
-     * @return confirmation of the time moment
+     * @param moment the moment, or {@code null} for the current time
+     * @return {@code true} if the tick is not after the moment
+     * @throws java.time.DateTimeException if the tick or the moment cannot be converted to an {@link Instant}
      */
-    default boolean happened(TemporalAccessor tick) {
-        return compareTemporalAccessor(getTick(), ofNullable(tick).orElseGet(Instant::now)) <= 0;
+    default boolean happened(@Nullable TemporalAccessor moment) {
+        return compareTemporalAccessor(getTick(), moment != null ? moment : Instant.now()) <= 0;
     }
 
     /**
-     * Identification that a point in time has arrived at the current point in time.
+     * Tells whether the tick has come by now: whether the tick is not after the current time.
      *
-     * @return confirmation of the time moment
+     * @return {@code true} if the tick is not after the current time
+     * @throws java.time.DateTimeException if the tick cannot be converted to an {@link Instant}
      */
     default boolean happened() {
         return happened(null);
     }
 
     /**
-     * Creating a comparator based on comparing 2 elements, where if the dates match, the passed comparator is used
-     * @param objectComparator item comparator
-     * @param <M> Expected extended type
-     * @return result of comparison
+     * Returns a comparator of objects by their ticks: the earlier tick first, the ticks compared as instants, and
+     * {@code null} before every object.
+     * <p>
+     * The objects of the same tick are compared by {@code objectComparator}, and its result is final. Without it the
+     * objects of the same tick are ordered:
+     * <ul>
+     *     <li>objects of the same class that is comparable with itself (it implements {@code Comparable} of the class
+     *     or of a supertype of it, itself or by a superclass or an interface): by their natural order;</li>
+     *     <li>other objects of the same class: by an arbitrary order of the objects;</li>
+     *     <li>objects of different classes: by the names of their classes, and classes of the same name, of different
+     *     class loaders, by an arbitrary order of the classes.</li>
+     * </ul>
+     * An arbitrary order does not change while the objects live, and in it an object is equal only to itself: the
+     * comparator is a total order, and a sorted set keeps every distinct object of a tick, unless the natural order of
+     * its class makes two of them equal.
+     * <p>
+     * The comparator throws a {@link java.time.DateTimeException} if a tick cannot be converted to an {@link Instant}.
+     *
+     * @param objectComparator the order of the objects of the same tick, or {@code null} for the order above
+     * @param <M> the type of the objects
+     * @return the comparator
      */
-    @SuppressWarnings({
-            "unchecked",
-            /*  Just because you can do something, does not mean you should, and that’s the case with nested ternary
-                operations. Nesting ternary operators results in the kind of code that may seem clear as day when you
-                write it, but six months later will leave maintainers (or worse - future you) scratching their heads
-                and cursing.
-             */
-            "squid:S3358"
-    })
     static <M extends Expected<? extends TemporalAccessor>> Comparator<M> comparator(@Nullable Comparator<? super M> objectComparator) {
-        return (first, second) -> first == second ? 0 // 0 for the same element
-                : first == null ? -1 // -1 for null first
-                : second == null ? 1 // 1 for null second
-                : Optional.of(compareTemporalAccessor(first.getTick(), second.getTick()))
-                        // if times are not equals - result of time comparison
-                        .filter(result -> result != 0)
-                        // if dates are different - compare objects
-                        .orElseGet(() -> Optional.ofNullable(objectComparator)
-                                .map(comparator -> comparator.compare(first, second))
-                                .orElseGet(() -> Optional.of(first)
-                                        .filter(f -> f.getClass().equals(second.getClass()))
-                                        .filter(Comparable.class::isInstance)
-                                        .map(Comparable.class::cast)
-                                        .map(f -> f.compareTo(second))
-                                        .orElseGet(() -> Integer.compare(first.hashCode(), second.hashCode())))
-                        );
+        return (first, second) -> {
+            if (first == second) {
+                return 0;
+            }
+            if (first == null || second == null) {
+                return first == null ? -1 : 1;
+            }
+            int result = compareTemporalAccessor(first.getTick(), second.getTick());
+            if (result != 0) {
+                return result;
+            }
+            return objectComparator != null ? objectComparator.compare(first, second) : SameTickOrder.compare(first, second);
+        };
     }
 
     /**
-     * Comparison of 2 points in time
-     * @param first first compared moment
-     * @param second second compared moment
-     * @return comparison result
+     * Compares two moments as instants.
+     *
+     * @param first the first moment
+     * @param second the second moment
+     * @return a negative number, zero or a positive number as the first moment is before, at or after the second
+     * @throws NullPointerException if a moment is null
+     * @throws java.time.DateTimeException if a moment cannot be converted to an {@link Instant}
      */
     static int compareTemporalAccessor(@NonNull TemporalAccessor first, @NonNull TemporalAccessor second) {
         return Instant.from(first).compareTo(Instant.from(second));

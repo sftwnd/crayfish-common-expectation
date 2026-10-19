@@ -4,11 +4,11 @@
 
     <groupId>com.github.sftwnd.crayfish.common</groupId>
     <artifactId>crayfish-common-expectation</artifactId>
-    <version>1.3.1</version>
+    <version>1.4.0</version>
 
     <name>CrayFish :: COMMON :: Expectation</name>
     <description>
-        Expectation object for time-based marker creation and packaging with it
+        Zero-dependency time markers for Java 8+: objects with a tick of any java.time type that converts to an Instant, a total order by the ticks, and immutable packages of an element and a tick
     </description>
     <url>https://github.com/sftwnd/crayfish-common-expectation</url>
 
@@ -30,52 +30,73 @@
     </developers>
 
     <scm>
-        <url>https://github.com.github.sftwnd/crayfish-common-expectation</url>
+        <url>https://github.com/sftwnd/crayfish-common-expectation</url>
         <connection>scm:git:https://github.com/sftwnd/crayfish-common-expectation.git</connection>
         <developerConnection>scm:git:git@github.com:sftwnd/crayfish-common-expectation.git</developerConnection>
-        <tag>crayfish-common-expectation-1.3.1</tag>
+        <tag>crayfish-common-expectation-1.4.0</tag>
     </scm>
-
-    <distributionManagement>
-        <repository>
-            <id>sonatype-nexus-staging</id>
-            <name>Nexus Release Repository</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-        <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <name>Sonatype Nexus Snapshots</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
-        <java.version>11</java.version>
+        <!-- the time of the entries of the jars, for reproducible builds: maven-release-plugin sets the time of the
+             release at release:prepare; without the property the super POM of Maven 3.10 sets 1980-02-01 -->
+        <project.build.outputTimestamp>2026-10-19T20:09:15Z</project.build.outputTimestamp>
+        <!-- the classes are Java 8 bytecode on every JDK: on JDK 9+ the profile release-8-on-jdk9+ compiles them with
+             release 8 and adds the module descriptor for Java 9 -->
+        <java.version>1.8</java.version>
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
-        <spotbugs-annotations.version>4.7.3</spotbugs-annotations.version>
-        <junit.version>5.9.2</junit.version>
-        <maven-compiler-plugin.version>3.10.1</maven-compiler-plugin.version>
-        <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
-        <maven-javadoc-plugin.version>3.5.0</maven-javadoc-plugin.version>
-        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
-        <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
-        <jacoco-maven-plugin.version>0.8.8</jacoco-maven-plugin.version>
+        <javaModuleName>com.github.sftwnd.crayfish_common_expectation</javaModuleName>
+        <spotbugs-annotations.version>4.10.5</spotbugs-annotations.version>
+        <!-- JUnit 6 requires Java 17: the tests run on Java 8 as well -->
+        <junit.version>5.14.4</junit.version>
+        <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
+        <!-- 3.11.0+: compileSourceRoots can be configured, for the module descriptor in src/main/java9 -->
+        <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+        <!-- dependency:copy of Apache Felix in .github/scripts/check-osgi-bundle.sh -->
+        <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
+        <maven-deploy-plugin.version>3.2.0</maven-deploy-plugin.version>
+        <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
+        <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+        <maven-install-plugin.version>3.2.0</maven-install-plugin.version>
+        <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
+        <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
+        <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
+        <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
+        <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
+        <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
+        <!-- the agent has to know the class files of the JDK the tests run on (up to JDK 25) -->
+        <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+        <central-publishing-maven-plugin.version>0.12.0</central-publishing-maven-plugin.version>
+        <!-- bnd 7 requires Java 17, the build runs on Java 8 -->
+        <bnd-maven-plugin.version>6.4.0</bnd-maven-plugin.version>
+        <!-- the plugin version is the SpotBugs version plus a plugin revision; it analyzes with that SpotBugs (needs Java 11+) -->
+        <spotbugs-maven-plugin.version>4.10.5.0</spotbugs-maven-plugin.version>
+        <!-- the scanner of the job SonarCloud of the CI, which runs on Java 21 -->
+        <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
+        <!-- the best practices of maven-gpg-plugin: the passphrase of the signing key comes from gpg-agent (or from
+             MAVEN_GPG_PASSPHRASE), not from a server of the settings, see the profile sign-artifacts -->
+        <gpg.bestPractices>true</gpg.bestPractices>
+        <!-- the sources jar is built by maven-jar-plugin (the execution attach-sources) from the sources of
+             src/main/java and src/main/java9; maven-source-plugin, which the release profile of the super POM of
+             Maven 3.9 runs with -DperformRelease=true, is skipped, so that it attaches no sources jar of its own -->
+        <maven.source.skip>true</maven.source.skip>
     </properties>
 
     <dependencies>
+        <!-- optional: NonNull/Nullable are CLASS-retention marker annotations, consumers need neither this jar
+             nor its dependency jsr305 (package javax.annotation) to compile or to run -->
         <dependency>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
-            <scope>compile</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- runs the tests: no test refers to it, so dependency:analyze reports it as unused -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
@@ -91,25 +112,95 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-compiler-plugin</artifactId>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
-                    <target>${maven.compiler.target}</target>
                     <compilerArgs>
                         <arg>-Xlint:all</arg>
-                        <arg>-Xlint:-requires-automatic</arg>
                         <arg>-Xlint:-processing</arg>
+                        <!-- JDK 21+ reports Java 8 as an obsolete target; Java 8 stays the target of the library -->
+                        <arg>-Xlint:-options</arg>
                     </compilerArgs>
                     <showWarnings>true</showWarnings>
                 </configuration>
             </plugin>
             <plugin>
+                <!-- the sources of the sources jar, which mirrors the multi-release jar: those of src/main/java at the
+                     root, those of src/main/java9 in META-INF/versions/9 (copied in the profile release-8-on-jdk9+,
+                     which compiles them) -->
                 <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-source-plugin</artifactId>
+                <artifactId>maven-resources-plugin</artifactId>
                 <executions>
                     <execution>
+                        <id>copy-sources</id>
+                        <phase>prepare-package</phase>
+                        <goals>
+                            <goal>copy-resources</goal>
+                        </goals>
+                        <configuration>
+                            <outputDirectory>${project.build.directory}/sources</outputDirectory>
+                            <resources>
+                                <resource>
+                                    <directory>${project.basedir}/src/main/java</directory>
+                                </resource>
+                            </resources>
+                        </configuration>
+                    </execution>
+                </executions>
+            </plugin>
+            <plugin>
+                <!-- the headers of the OSGi bundle, analyzed from the classes -->
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>bnd-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>bnd-process</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- not in target/classes: there its Automatic-Module-Name makes javac take target/classes for the module
+                         when it compiles module-info.java in an incremental build -->
+                    <manifestPath>${project.build.directory}/bnd/MANIFEST.MF</manifestPath>
+                    <bnd><![CDATA[
+Bundle-SymbolicName: com.github.sftwnd.crayfish.common.expectation
+Bundle-License: BSD-3-Clause;link="https://opensource.org/licenses/BSD-3-Clause"
+# the name of the module of a jar built on JDK 8, which has no module descriptor
+Automatic-Module-Name: ${javaModuleName}
+Multi-Release: true
+# bnd 6 does not know multi-release jars and takes the module descriptor of META-INF/versions/9 for a class in the
+# wrong directory
+-fixupmessages: "Classes found in the wrong directory: *META-INF/versions/9/*";restrict:=error;is:=ignore
+# the version of the package is the version of the release; the CLASS-retention SpotBugs annotations are not imported
+Export-Package: com.github.sftwnd.crayfish.common.expectation;version="${version;===;${Bundle-Version}}"
+-noextraheaders: true
+# snapshot builds get the version qualifier SNAPSHOT instead of a timestamp, so that they are reproducible
+-snapshot: SNAPSHOT
+]]></bnd>
+                </configuration>
+            </plugin>
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-jar-plugin</artifactId>
+                <configuration>
+                    <archive>
+                        <!-- the manifest of bnd-maven-plugin: the headers of the bundle, Automatic-Module-Name and
+                             Multi-Release -->
+                        <manifestFile>${project.build.directory}/bnd/MANIFEST.MF</manifestFile>
+                    </archive>
+                </configuration>
+                <executions>
+                    <execution>
+                        <!-- the sources jar of the sources copied by maven-resources-plugin -->
                         <id>attach-sources</id>
+                        <phase>package</phase>
                         <goals>
                             <goal>jar</goal>
                         </goals>
+                        <configuration>
+                            <classifier>sources</classifier>
+                            <classesDirectory>${project.build.directory}/sources</classesDirectory>
+                            <!-- the default manifest, not that of the jar -->
+                            <archive combine.self="override" />
+                        </configuration>
                     </execution>
                 </executions>
             </plugin>
@@ -117,7 +208,9 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
-                    <source>${maven.compiler.source}</source>
+                    <source>8</source>
+                    <!-- an undocumented public or protected member fails the build (JDK 17+ reports it) -->
+                    <failOnWarnings>true</failOnWarnings>
                 </configuration>
                 <executions>
                     <execution>
@@ -142,8 +235,20 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <configuration>
                     <mavenExecutorId>forked-path</mavenExecutorId>
-                    <useReleaseProfile>false</useReleaseProfile>
-                    <arguments>-P!sonatype-oss-release</arguments>
+                    <!-- the release profile of the super POM is not used: useReleaseProfile (deprecated) is false by
+                         default -->
+                    <releaseProfiles>sign-artifacts</releaseProfiles>
+                </configuration>
+            </plugin>
+            <plugin>
+                <!-- deploy publishes to the Central Publisher Portal (server id "central" with a Portal user token in
+                     settings.xml); the deployment is validated, not published: it is published on the Portal by hand -->
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <deploymentName>${project.artifactId}-${project.version}</deploymentName>
                 </configuration>
             </plugin>
             <plugin>
@@ -156,6 +261,33 @@
                             <goal>report</goal>
                         </goals>
                     </execution>
+                    <execution>
+                        <!-- the tests cover at least 90% of the instructions and of the branches of the classes, or the
+                             build fails (with -DskipTests there is no execution data, and the check is skipped) -->
+                        <id>check</id>
+                        <goals>
+                            <goal>check</goal>
+                        </goals>
+                        <configuration>
+                            <rules>
+                                <rule>
+                                    <element>BUNDLE</element>
+                                    <limits>
+                                        <limit>
+                                            <counter>INSTRUCTION</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.90</minimum>
+                                        </limit>
+                                        <limit>
+                                            <counter>BRANCH</counter>
+                                            <value>COVEREDRATIO</value>
+                                            <minimum>0.90</minimum>
+                                        </limit>
+                                    </limits>
+                                </rule>
+                            </rules>
+                        </configuration>
+                    </execution>
                 </executions>
             </plugin>
         </plugins>
@@ -164,10 +296,48 @@
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>${maven-clean-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                 </plugin>
                 <plugin>
+                    <!-- the version of the default lifecycle, whose execution the extension of central-publishing removes,
+                         and of the release profile of the super POM of Maven 3.9 (-DperformRelease=true) -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${maven-deploy-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${maven-dependency-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-enforcer-plugin</artifactId>
+                    <version>${maven-enforcer-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>${maven-install-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-jar-plugin</artifactId>
+                    <version>${maven-jar-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-resources-plugin</artifactId>
+                    <version>${maven-resources-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <!-- skipped (maven.source.skip); the version for the release profile of the super POM of Maven 3.9 -->
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-source-plugin</artifactId>
                     <version>${maven-source-plugin.version}</version>
@@ -197,11 +367,121 @@
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>${jacoco-maven-plugin.version}</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>${central-publishing-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${spotbugs-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>biz.aQute.bnd</groupId>
+                    <artifactId>bnd-maven-plugin</artifactId>
+                    <version>${bnd-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <!-- SonarCloud analysis in the GitHub Actions workflow -->
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>${sonar-maven-plugin.version}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
 
     <profiles>
+        <profile>
+            <!-- compile against the Java 8 API on JDK 9+ (-source/-target alone do not check the API) -->
+            <id>release-8-on-jdk9+</id>
+            <activation>
+                <jdk>[9,)</jdk>
+            </activation>
+            <properties>
+                <maven.compiler.release>8</maven.compiler.release>
+            </properties>
+            <build>
+                <plugins>
+                    <plugin>
+                        <!-- the module descriptor, compiled for Java 9 into META-INF/versions/9: a named module on
+                             Java 9+, while Java 8 ignores it (a build on JDK 8 produces a jar without it) -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-compiler-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>compile-module-info</id>
+                                <goals>
+                                    <goal>compile</goal>
+                                </goals>
+                                <configuration>
+                                    <release>9</release>
+                                    <multiReleaseOutput>true</multiReleaseOutput>
+                                    <compileSourceRoots>
+                                        <compileSourceRoot>${project.basedir}/src/main/java9</compileSourceRoot>
+                                    </compileSourceRoots>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
+                        <!-- the sources of src/main/java9 in the sources jar, in META-INF/versions/9 as their classes
+                             in the jar -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-resources-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>copy-sources-9</id>
+                                <phase>prepare-package</phase>
+                                <goals>
+                                    <goal>copy-resources</goal>
+                                </goals>
+                                <configuration>
+                                    <outputDirectory>${project.build.directory}/sources/META-INF/versions/9</outputDirectory>
+                                    <resources>
+                                        <resource>
+                                            <directory>${project.basedir}/src/main/java9</directory>
+                                        </resource>
+                                    </resources>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <!-- SpotBugs itself runs on Java 11+, so the build on JDK 8 skips the analysis: the classes are the same
+                 Java 8 bytecode (release 8) on every JDK -->
+            <id>spotbugs</id>
+            <activation>
+                <jdk>[11,)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <!-- a finding fails the build, and the tests are not analyzed: the defaults of failOnError and
+                             includeTests -->
+                        <configuration>
+                            <effort>Max</effort>
+                            <threshold>Low</threshold>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>spotbugs-check</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
         <profile>
             <id>sign-artifacts</id>
             <activation>
@@ -213,6 +493,27 @@
             <build>
                 <plugins>
                     <plugin>
+                        <!-- a jar built on JDK 8 has no module descriptor -->
+                        <groupId>org.apache.maven.plugins</groupId>
+                        <artifactId>maven-enforcer-plugin</artifactId>
+                        <executions>
+                            <execution>
+                                <id>release-on-jdk9+</id>
+                                <goals>
+                                    <goal>enforce</goal>
+                                </goals>
+                                <configuration>
+                                    <rules>
+                                        <requireJavaVersion>
+                                            <version>[9,)</version>
+                                            <message>A release has to be built on JDK 9+, so that the jar contains the module descriptor</message>
+                                        </requireJavaVersion>
+                                    </rules>
+                                </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                    <plugin>
                         <groupId>org.apache.maven.plugins</groupId>
                         <artifactId>maven-gpg-plugin</artifactId>
                         <executions>
@@ -222,15 +523,11 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
-                                <configuration>
-                                    <useAgent>true</useAgent>
-                                    <passphrase>${gpg.passphrase}</passphrase>
-                                    <gpgArguments>
-                                        <arg>--batch</arg>
-                                        <arg>--pinentry-mode</arg>
-                                        <arg>loopback</arg>
-                                    </gpgArguments>
-                                </configuration>
+                                <!-- the passphrase of the key comes from gpg-agent: before the release unlock the key
+                                     with any signature of gpg outside of the batch mode, so that gpg-agent caches it.
+                                     In batch mode the plugin runs gpg with the pinentry mode "error": a locked key fails
+                                     without a prompt. -Dgpg.bestPractices=false takes the passphrase of the server
+                                     gpg.passphrase of the settings instead -->
                             </execution>
                         </executions>
                     </plugin>
@@ -246,15 +543,13 @@
                 <artifactId>spotbugs-annotations</artifactId>
                 <version>${spotbugs-annotations.version}</version>
             </dependency>
+            <!-- one version for the API, the engine and the platform -->
             <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-api</artifactId>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
                 <version>${junit.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
-                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
