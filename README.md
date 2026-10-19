@@ -3,6 +3,7 @@
 [![Maven Central](https://img.shields.io/maven-central/v/com.github.sftwnd.crayfish.common/crayfish-common-expectation)](https://central.sonatype.com/artifact/com.github.sftwnd.crayfish.common/crayfish-common-expectation)
 [![Java 8+](https://img.shields.io/badge/Java-8%2B-blue)](#java-modules)
 [![JPMS](https://img.shields.io/badge/JPMS-named%20module-blue)](#java-modules)
+[![OSGi](https://img.shields.io/badge/OSGi-bundle-blue)](#osgi)
 [![javadoc](https://javadoc.io/badge2/com.github.sftwnd.crayfish.common/crayfish-common-expectation/javadoc.svg)](https://javadoc.io/doc/com.github.sftwnd.crayfish.common/crayfish-common-expectation)
 [![Quality Gate Status](https://sonarcloud.io/api/project_badges/measure?project=sftwnd_crayfish_common_expectation&metric=alert_status)](https://sonarcloud.io/summary/new_code?id=sftwnd_crayfish_common_expectation)
 [![Coverage](https://sonarcloud.io/api/project_badges/measure?project=sftwnd_crayfish_common_expectation&metric=coverage)](https://sonarcloud.io/summary/new_code?id=sftwnd_crayfish_common_expectation)
@@ -31,7 +32,8 @@ element: a given one, one of a supplier or one extracted from the element, taken
 - **Functional interfaces** — `Expected`, `TemporalSupplier` and `TemporalExtractor` are lambdas
 - **Zero runtime dependencies** — the SpotBugs annotations of the API are optional, needed neither to compile against
   the library nor to run it
-- **Java 8+, JPMS** — Java 8 bytecode, a named module on Java 9+, see [Java modules](#java-modules)
+- **Java 8+, JPMS, OSGi** — Java 8 bytecode, a named module on Java 9+ and an OSGi bundle, see
+  [Java modules](#java-modules) and [OSGi](#osgi)
 
 ## Installation
 
@@ -112,6 +114,21 @@ module my.application {
 The module descriptor is in `META-INF/versions/9` of the multi-release jar, so Java 8 ignores it. The sources jar has
 its source at the same place. The package is exported, not open: the implementation classes of the packages and of the
 order are not public, and a framework that needs deep reflection on them needs `--add-opens`.
+
+## OSGi
+
+The jar is an OSGi bundle with the symbolic name `com.github.sftwnd.crayfish.common.expectation`. It exports the
+package `com.github.sftwnd.crayfish.common.expectation` with the version of the release, imports no package (the
+SpotBugs annotations of the API are not needed at run time) and requires Java 8 (`osgi.ee` JavaSE 1.8):
+
+```
+Bundle-SymbolicName: com.github.sftwnd.crayfish.common.expectation
+Export-Package: com.github.sftwnd.crayfish.common.expectation;version="1.4.0"
+Require-Capability: osgi.ee;filter:="(&(osgi.ee=JavaSE)(version=1.8))"
+```
+
+The build checks the bundle in Apache Felix on Java 8 and Java 21: the framework resolves it, and a bundle that imports
+the package runs.
 
 ## Building
 
