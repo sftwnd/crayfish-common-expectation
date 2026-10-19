@@ -6,6 +6,9 @@ import org.junit.jupiter.api.Assertions;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.time.DateTimeException;
 import java.time.Instant;
 import java.time.LocalDateTime;
@@ -25,6 +28,7 @@ import java.util.TreeSet;
 import static com.github.sftwnd.crayfish.common.expectation.IdentityHashCodes.sameIdentityHashCode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
+import static org.junit.jupiter.api.Assertions.assertNotSame;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
@@ -143,8 +147,24 @@ class ExpectedTest {
         ExpectedStringPack second = new OtherExpectedStringPack("A", instant);
         int result = comparator.compare(first, second);
         assertNotEquals(0, result, "comparator(null).compare must not compare objects of different classes by the natural order of one of them");
+        assertTrue(result < 0, "comparator(null).compare has to order objects of different classes by the names of their classes: ExpectedTest$ExpectedStringPack before ExpectedTest$OtherExpectedStringPack");
         assertEquals(-Integer.signum(result), Integer.signum(comparator.compare(second, first)), "comparator(null).compare has to be antisymmetric for objects of different classes");
         assertEquals(0, comparator.compare(second, new OtherExpectedStringPack("A", instant)), "comparator(null).compare has to compare objects of the same Comparable subclass by their natural order");
+    }
+
+    @Test
+    void comparatorClassesOfTheSameNameTest() throws ReflectiveOperationException {
+        Class<?> twinClass = new TwinLoader().loadClass(Twin.class.getName());
+        assertNotSame(Twin.class, twinClass, "The class loader of the test has to define a class of its own");
+        assertEquals(Twin.class.getName(), twinClass.getName(), "The two classes have to have the same name");
+        @SuppressWarnings("unchecked")
+        Expected<Instant> other = (Expected<Instant>) twinClass.getDeclaredConstructor().newInstance();
+        Expected<Instant> twin = new Twin();
+        Comparator<Expected<Instant>> comparator = Expected.comparator(null);
+        int result = comparator.compare(twin, other);
+        assertNotEquals(0, result, "comparator(null).compare must not make objects of two classes of the same name equal");
+        assertEquals(-result, comparator.compare(other, twin), "comparator(null).compare has to be antisymmetric for classes of the same name");
+        assertEquals(result, comparator.compare(twin, other), "comparator(null).compare has to give the same order of classes of the same name at every call");
     }
 
     @Test
@@ -355,6 +375,50 @@ class ExpectedTest {
         @Override
         public Instant getTick() {
             return instant;
+        }
+    }
+
+    // an object of the same tick, whose class TwinLoader defines once more
+    public static final class Twin implements Expected<Instant> {
+        @NonNull
+        @Override
+        public Instant getTick() {
+            return Instant.EPOCH;
+        }
+    }
+
+    // defines Twin once more, as a class of the same name of another class loader, which implements the same Expected
+    static final class TwinLoader extends ClassLoader {
+        TwinLoader() {
+            super(TwinLoader.class.getClassLoader());
+        }
+
+        @Override
+        protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
+            if (!Twin.class.getName().equals(name)) {
+                return super.loadClass(name, resolve);
+            }
+            synchronized (getClassLoadingLock(name)) {
+                Class<?> loaded = findLoadedClass(name);
+                if (loaded == null) {
+                    byte[] bytes = bytes(name.replace('.', '/') + ".class");
+                    loaded = defineClass(name, bytes, 0, bytes.length);
+                }
+                return loaded;
+            }
+        }
+
+        private byte[] bytes(String resource) throws ClassNotFoundException {
+            try (InputStream in = getParent().getResourceAsStream(resource)) {
+                ByteArrayOutputStream out = new ByteArrayOutputStream();
+                byte[] buffer = new byte[4096];
+                for (int count = in.read(buffer); count >= 0; count = in.read(buffer)) {
+                    out.write(buffer, 0, count);
+                }
+                return out.toByteArray();
+            } catch (IOException exception) {
+                throw new ClassNotFoundException(resource, exception);
+            }
         }
     }
 
