@@ -1,6 +1,5 @@
-package com.github.sftwnd.crayfish.common.expectation.test;
+package com.github.sftwnd.crayfish.common.expectation;
 
-import com.github.sftwnd.crayfish.common.expectation.Expected;
 import edu.umd.cs.findbugs.annotations.NonNull;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.Assertions;
@@ -23,7 +22,7 @@ import java.util.Random;
 import java.util.Set;
 import java.util.TreeSet;
 
-import static com.github.sftwnd.crayfish.common.expectation.test.IdentityHashCodes.sameIdentityHashCode;
+import static com.github.sftwnd.crayfish.common.expectation.IdentityHashCodes.sameIdentityHashCode;
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertNotEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
