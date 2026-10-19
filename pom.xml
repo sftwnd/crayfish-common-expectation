@@ -30,27 +30,17 @@
     </developers>
 
     <scm>
-        <url>https://github.com.github.sftwnd/crayfish-common-expectation</url>
+        <url>https://github.com/sftwnd/crayfish-common-expectation</url>
         <connection>scm:git:https://github.com/sftwnd/crayfish-common-expectation.git</connection>
         <developerConnection>scm:git:git@github.com:sftwnd/crayfish-common-expectation.git</developerConnection>
         <tag>HEAD</tag>
     </scm>
 
-    <distributionManagement>
-        <repository>
-            <id>sonatype-nexus-staging</id>
-            <name>Nexus Release Repository</name>
-            <url>https://oss.sonatype.org/service/local/staging/deploy/maven2/</url>
-        </repository>
-        <snapshotRepository>
-            <id>sonatype-nexus-snapshots</id>
-            <name>Sonatype Nexus Snapshots</name>
-            <url>https://oss.sonatype.org/content/repositories/snapshots/</url>
-        </snapshotRepository>
-    </distributionManagement>
-
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <!-- the time of the entries of the jars, for reproducible builds: maven-release-plugin sets the time of the
+             release at release:prepare; without the property the super POM of Maven 3.10 sets 1980-02-01 -->
+        <project.build.outputTimestamp>2026-10-19T14:40:00Z</project.build.outputTimestamp>
         <!-- the classes are Java 8 bytecode on every JDK: on JDK 9+ the profile release-8-on-jdk9+ compiles them with
              release 8 and adds the module descriptor for Java 9 -->
         <java.version>1.8</java.version>
@@ -71,9 +61,13 @@
         <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
         <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
         <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
+        <maven-source-plugin.version>3.4.0</maven-source-plugin.version>
         <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
         <!-- the agent has to know the class files of the JDK the tests run on (up to JDK 25) -->
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+        <central-publishing-maven-plugin.version>0.12.0</central-publishing-maven-plugin.version>
+        <!-- the plugin version is the SpotBugs version plus a plugin revision; it analyzes with that SpotBugs (needs Java 11+) -->
+        <spotbugs-maven-plugin.version>4.10.5.0</spotbugs-maven-plugin.version>
         <!-- the scanner of the job SonarCloud of the CI, which runs on Java 21 -->
         <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
         <!-- the best practices of maven-gpg-plugin: the passphrase of the signing key comes from gpg-agent (or from
@@ -181,6 +175,8 @@
                 <artifactId>maven-javadoc-plugin</artifactId>
                 <configuration>
                     <source>8</source>
+                    <!-- an undocumented public or protected member fails the build (JDK 17+ reports it) -->
+                    <failOnWarnings>true</failOnWarnings>
                 </configuration>
                 <executions>
                     <execution>
@@ -211,6 +207,17 @@
                 </configuration>
             </plugin>
             <plugin>
+                <!-- deploy publishes to the Central Publisher Portal (server id "central" with a Portal user token in
+                     settings.xml); the deployment is validated, not published: it is published on the Portal by hand -->
+                <groupId>org.sonatype.central</groupId>
+                <artifactId>central-publishing-maven-plugin</artifactId>
+                <extensions>true</extensions>
+                <configuration>
+                    <publishingServerId>central</publishingServerId>
+                    <deploymentName>${project.artifactId}-${project.version}</deploymentName>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.jacoco</groupId>
                 <artifactId>jacoco-maven-plugin</artifactId>
                 <executions>
@@ -237,6 +244,8 @@
                     <version>${maven-compiler-plugin.version}</version>
                 </plugin>
                 <plugin>
+                    <!-- the version of the default lifecycle, whose execution the extension of central-publishing removes,
+                         and of the release profile of the super POM of Maven 3.9 (-DperformRelease=true) -->
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-deploy-plugin</artifactId>
                     <version>${maven-deploy-plugin.version}</version>
@@ -260,6 +269,12 @@
                     <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-resources-plugin</artifactId>
                     <version>${maven-resources-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <!-- skipped (maven.source.skip); the version for the release profile of the super POM of Maven 3.9 -->
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-source-plugin</artifactId>
+                    <version>${maven-source-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -287,6 +302,17 @@
                     <version>${jacoco-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
+                    <groupId>org.sonatype.central</groupId>
+                    <artifactId>central-publishing-maven-plugin</artifactId>
+                    <version>${central-publishing-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>com.github.spotbugs</groupId>
+                    <artifactId>spotbugs-maven-plugin</artifactId>
+                    <version>${spotbugs-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <!-- SonarCloud analysis in the GitHub Actions workflow -->
                     <groupId>org.sonarsource.scanner.maven</groupId>
                     <artifactId>sonar-maven-plugin</artifactId>
                     <version>${sonar-maven-plugin.version}</version>
@@ -348,6 +374,37 @@
                                         </resource>
                                     </resources>
                                 </configuration>
+                            </execution>
+                        </executions>
+                    </plugin>
+                </plugins>
+            </build>
+        </profile>
+        <profile>
+            <!-- SpotBugs itself runs on Java 11+, so the build on JDK 8 skips the analysis: the classes are the same
+                 Java 8 bytecode (release 8) on every JDK -->
+            <id>spotbugs</id>
+            <activation>
+                <jdk>[11,)</jdk>
+            </activation>
+            <build>
+                <plugins>
+                    <plugin>
+                        <groupId>com.github.spotbugs</groupId>
+                        <artifactId>spotbugs-maven-plugin</artifactId>
+                        <!-- a finding fails the build, and the tests are not analyzed: the defaults of failOnError and
+                             includeTests -->
+                        <configuration>
+                            <effort>Max</effort>
+                            <threshold>Low</threshold>
+                        </configuration>
+                        <executions>
+                            <execution>
+                                <id>spotbugs-check</id>
+                                <phase>verify</phase>
+                                <goals>
+                                    <goal>check</goal>
+                                </goals>
                             </execution>
                         </executions>
                     </plugin>

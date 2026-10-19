@@ -1,5 +1,5 @@
 #!/bin/bash
-# Checks the jar built on JDK 9+ (mvn package): the module descriptor, a modular consumer on the module path
+# Checks the jar built on JDK 9+ (./mvnw package): the module descriptor, a modular consumer on the module path
 # with the JDK of JAVA_HOME, and, if the home of a Java 8 JDK is given, a consumer on the class path of Java 8.
 # usage: .github/scripts/check-modular-jar.sh [java-8-home]
 set -euo pipefail
