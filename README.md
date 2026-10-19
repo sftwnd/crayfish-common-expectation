@@ -21,8 +21,10 @@ element: a fixed one, one supplied at every call or one extracted from the eleme
 - **Any `java.time` moment** — ticks of different types are compared as instants: an `Instant` and a `ZonedDateTime`
   of the same moment are equal
 - **Happened or not** — `happened()` against the current time, `happened(tick)` against any moment
-- **Ordering** — `Expected.comparator(...)` orders by the tick, then by the given comparator or, without one, by the
-  natural order of `Comparable` objects of the same class; `null` first
+- **Ordering** — `Expected.comparator(...)` orders by the tick, then by the given comparator; without one, objects of
+  the same tick by the natural order of their class if it is comparable with itself, and otherwise by an arbitrary
+  order that does not change while they live: a total order, and a sorted set keeps every distinct object of a tick;
+  `null` first
 - **Packages** — `ExpectedPackage.pack`, `supply` and `extract` attach a tick to an element without a class of
   its own
 - **Functional interfaces** — `Expected`, `TemporalSupplier` and `TemporalExtractor` are lambdas
