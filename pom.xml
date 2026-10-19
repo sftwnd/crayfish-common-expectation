@@ -4,7 +4,7 @@
 
     <groupId>com.github.sftwnd.crayfish.common</groupId>
     <artifactId>crayfish-common-expectation</artifactId>
-    <version>1.4.0</version>
+    <version>1.4.1-SNAPSHOT</version>
 
     <name>CrayFish :: COMMON :: Expectation</name>
     <description>
@@ -33,14 +33,14 @@
         <url>https://github.com/sftwnd/crayfish-common-expectation</url>
         <connection>scm:git:https://github.com/sftwnd/crayfish-common-expectation.git</connection>
         <developerConnection>scm:git:git@github.com:sftwnd/crayfish-common-expectation.git</developerConnection>
-        <tag>crayfish-common-expectation-1.4.0</tag>
+        <tag>HEAD</tag>
     </scm>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <!-- the time of the entries of the jars, for reproducible builds: maven-release-plugin sets the time of the
              release at release:prepare; without the property the super POM of Maven 3.10 sets 1980-02-01 -->
-        <project.build.outputTimestamp>2026-10-19T20:09:15Z</project.build.outputTimestamp>
+        <project.build.outputTimestamp>2026-10-19T20:09:35Z</project.build.outputTimestamp>
         <!-- the classes are Java 8 bytecode on every JDK: on JDK 9+ the profile release-8-on-jdk9+ compiles them with
              release 8 and adds the module descriptor for Java 9 -->
         <java.version>1.8</java.version>
