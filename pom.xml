@@ -57,19 +57,28 @@
         <maven.compiler.source>${java.version}</maven.compiler.source>
         <maven.compiler.target>${java.version}</maven.compiler.target>
         <javaModuleName>com.github.sftwnd.crayfish_common_expectation</javaModuleName>
-        <spotbugs-annotations.version>4.7.3</spotbugs-annotations.version>
-        <junit.version>5.9.2</junit.version>
+        <spotbugs-annotations.version>4.10.5</spotbugs-annotations.version>
+        <!-- JUnit 6 requires Java 17: the tests run on Java 8 as well -->
+        <junit.version>5.14.4</junit.version>
+        <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
         <!-- 3.11.0+: compileSourceRoots can be configured, for the module descriptor in src/main/java9 -->
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+        <maven-deploy-plugin.version>3.2.0</maven-deploy-plugin.version>
         <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
+        <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
+        <maven-install-plugin.version>3.2.0</maven-install-plugin.version>
         <maven-jar-plugin.version>3.5.1</maven-jar-plugin.version>
-        <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
         <maven-javadoc-plugin.version>3.12.0</maven-javadoc-plugin.version>
-        <maven-surefire-plugin.version>2.22.2</maven-surefire-plugin.version>
-        <maven-release-plugin.version>2.5.3</maven-release-plugin.version>
-        <maven-gpg-plugin.version>3.0.1</maven-gpg-plugin.version>
+        <maven-release-plugin.version>3.3.1</maven-release-plugin.version>
+        <maven-resources-plugin.version>3.5.0</maven-resources-plugin.version>
+        <maven-surefire-plugin.version>3.6.0</maven-surefire-plugin.version>
         <!-- the agent has to know the class files of the JDK the tests run on (up to JDK 25) -->
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
+        <!-- the scanner of the job SonarCloud of the CI, which runs on Java 21 -->
+        <sonar-maven-plugin.version>5.8.0.7211</sonar-maven-plugin.version>
+        <!-- the best practices of maven-gpg-plugin: the passphrase of the signing key comes from gpg-agent (or from
+             MAVEN_GPG_PASSPHRASE), not from a server of the settings, see the profile sign-artifacts -->
+        <gpg.bestPractices>true</gpg.bestPractices>
         <!-- the sources jar is built by maven-jar-plugin (the execution attach-sources) from the sources of
              src/main/java and src/main/java9; maven-source-plugin, which the release profile of the super POM of
              Maven 3.9 runs with -DperformRelease=true, is skipped, so that it attaches no sources jar of its own -->
@@ -77,16 +86,19 @@
     </properties>
 
     <dependencies>
+        <!-- optional: NonNull/Nullable are CLASS-retention marker annotations, consumers need neither this jar
+             nor its dependency jsr305 (package javax.annotation) to compile or to run -->
         <dependency>
             <groupId>com.github.spotbugs</groupId>
             <artifactId>spotbugs-annotations</artifactId>
-            <scope>compile</scope>
+            <optional>true</optional>
         </dependency>
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-api</artifactId>
             <scope>test</scope>
         </dependency>
+        <!-- runs the tests: no test refers to it, so dependency:analyze reports it as unused -->
         <dependency>
             <groupId>org.junit.jupiter</groupId>
             <artifactId>junit-jupiter-engine</artifactId>
@@ -193,8 +205,9 @@
                 <artifactId>maven-release-plugin</artifactId>
                 <configuration>
                     <mavenExecutorId>forked-path</mavenExecutorId>
-                    <useReleaseProfile>false</useReleaseProfile>
-                    <arguments>-P!sonatype-oss-release</arguments>
+                    <!-- the release profile of the super POM is not used: useReleaseProfile (deprecated) is false by
+                         default -->
+                    <releaseProfiles>sign-artifacts</releaseProfiles>
                 </configuration>
             </plugin>
             <plugin>
@@ -215,13 +228,28 @@
             <plugins>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-clean-plugin</artifactId>
+                    <version>${maven-clean-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-compiler-plugin</artifactId>
                     <version>${maven-compiler-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-deploy-plugin</artifactId>
+                    <version>${maven-deploy-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>${maven-enforcer-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-install-plugin</artifactId>
+                    <version>${maven-install-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
@@ -258,6 +286,11 @@
                     <artifactId>jacoco-maven-plugin</artifactId>
                     <version>${jacoco-maven-plugin.version}</version>
                 </plugin>
+                <plugin>
+                    <groupId>org.sonarsource.scanner.maven</groupId>
+                    <artifactId>sonar-maven-plugin</artifactId>
+                    <version>${sonar-maven-plugin.version}</version>
+                </plugin>
             </plugins>
         </pluginManagement>
     </build>
@@ -291,10 +324,6 @@
                                     <compileSourceRoots>
                                         <compileSourceRoot>${project.basedir}/src/main/java9</compileSourceRoot>
                                     </compileSourceRoots>
-                                    <compilerArgs combine.children="append">
-                                        <!-- spotbugs-annotations is an automatic module -->
-                                        <arg>-Xlint:-requires-automatic</arg>
-                                    </compilerArgs>
                                 </configuration>
                             </execution>
                         </executions>
@@ -366,15 +395,11 @@
                                 <goals>
                                     <goal>sign</goal>
                                 </goals>
-                                <configuration>
-                                    <useAgent>true</useAgent>
-                                    <passphrase>${gpg.passphrase}</passphrase>
-                                    <gpgArguments>
-                                        <arg>--batch</arg>
-                                        <arg>--pinentry-mode</arg>
-                                        <arg>loopback</arg>
-                                    </gpgArguments>
-                                </configuration>
+                                <!-- the passphrase of the key comes from gpg-agent: before the release unlock the key
+                                     with any signature of gpg outside of the batch mode, so that gpg-agent caches it.
+                                     In batch mode the plugin runs gpg with the pinentry mode "error": a locked key fails
+                                     without a prompt. -Dgpg.bestPractices=false takes the passphrase of the server
+                                     gpg.passphrase of the settings instead -->
                             </execution>
                         </executions>
                     </plugin>
@@ -390,15 +415,13 @@
                 <artifactId>spotbugs-annotations</artifactId>
                 <version>${spotbugs-annotations.version}</version>
             </dependency>
+            <!-- one version for the API, the engine and the platform -->
             <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-api</artifactId>
+                <groupId>org.junit</groupId>
+                <artifactId>junit-bom</artifactId>
                 <version>${junit.version}</version>
-            </dependency>
-            <dependency>
-                <groupId>org.junit.jupiter</groupId>
-                <artifactId>junit-jupiter-engine</artifactId>
-                <version>${junit.version}</version>
+                <type>pom</type>
+                <scope>import</scope>
             </dependency>
         </dependencies>
     </dependencyManagement>
