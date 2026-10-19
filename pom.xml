@@ -8,7 +8,7 @@
 
     <name>CrayFish :: COMMON :: Expectation</name>
     <description>
-        Expectation object for time-based marker creation and packaging with it
+        Zero-dependency time markers for Java 8+: objects with a tick of any java.time type that converts to an Instant, a total order by the ticks, and immutable packages of an element and a tick
     </description>
     <url>https://github.com/sftwnd/crayfish-common-expectation</url>
 
