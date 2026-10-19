@@ -53,6 +53,8 @@
         <maven-clean-plugin.version>3.5.0</maven-clean-plugin.version>
         <!-- 3.11.0+: compileSourceRoots can be configured, for the module descriptor in src/main/java9 -->
         <maven-compiler-plugin.version>3.16.0</maven-compiler-plugin.version>
+        <!-- dependency:copy of Apache Felix in .github/scripts/check-osgi-bundle.sh -->
+        <maven-dependency-plugin.version>3.11.0</maven-dependency-plugin.version>
         <maven-deploy-plugin.version>3.2.0</maven-deploy-plugin.version>
         <maven-enforcer-plugin.version>3.6.3</maven-enforcer-plugin.version>
         <maven-gpg-plugin.version>3.2.8</maven-gpg-plugin.version>
@@ -66,6 +68,8 @@
         <!-- the agent has to know the class files of the JDK the tests run on (up to JDK 25) -->
         <jacoco-maven-plugin.version>0.8.15</jacoco-maven-plugin.version>
         <central-publishing-maven-plugin.version>0.12.0</central-publishing-maven-plugin.version>
+        <!-- bnd 7 requires Java 17, the build runs on Java 8 -->
+        <bnd-maven-plugin.version>6.4.0</bnd-maven-plugin.version>
         <!-- the plugin version is the SpotBugs version plus a plugin revision; it analyzes with that SpotBugs (needs Java 11+) -->
         <spotbugs-maven-plugin.version>4.10.5.0</spotbugs-maven-plugin.version>
         <!-- the scanner of the job SonarCloud of the CI, which runs on Java 21 -->
@@ -142,15 +146,45 @@
                 </executions>
             </plugin>
             <plugin>
+                <!-- the headers of the OSGi bundle, analyzed from the classes -->
+                <groupId>biz.aQute.bnd</groupId>
+                <artifactId>bnd-maven-plugin</artifactId>
+                <executions>
+                    <execution>
+                        <goals>
+                            <goal>bnd-process</goal>
+                        </goals>
+                    </execution>
+                </executions>
+                <configuration>
+                    <!-- not in target/classes: there its Automatic-Module-Name makes javac take target/classes for the module
+                         when it compiles module-info.java in an incremental build -->
+                    <manifestPath>${project.build.directory}/bnd/MANIFEST.MF</manifestPath>
+                    <bnd><![CDATA[
+Bundle-SymbolicName: com.github.sftwnd.crayfish.common.expectation
+Bundle-License: BSD-3-Clause;link="https://opensource.org/licenses/BSD-3-Clause"
+# the name of the module of a jar built on JDK 8, which has no module descriptor
+Automatic-Module-Name: ${javaModuleName}
+Multi-Release: true
+# bnd 6 does not know multi-release jars and takes the module descriptor of META-INF/versions/9 for a class in the
+# wrong directory
+-fixupmessages: "Classes found in the wrong directory: *META-INF/versions/9/*";restrict:=error;is:=ignore
+# the version of the package is the version of the release; the CLASS-retention SpotBugs annotations are not imported
+Export-Package: com.github.sftwnd.crayfish.common.expectation;version="${version;===;${Bundle-Version}}"
+-noextraheaders: true
+# snapshot builds get the version qualifier SNAPSHOT instead of a timestamp, so that they are reproducible
+-snapshot: SNAPSHOT
+]]></bnd>
+                </configuration>
+            </plugin>
+            <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <configuration>
                     <archive>
-                        <manifestEntries>
-                            <!-- the name of the module of a jar built on JDK 8, which has no module descriptor -->
-                            <Automatic-Module-Name>${javaModuleName}</Automatic-Module-Name>
-                            <Multi-Release>true</Multi-Release>
-                        </manifestEntries>
+                        <!-- the manifest of bnd-maven-plugin: the headers of the bundle, Automatic-Module-Name and
+                             Multi-Release -->
+                        <manifestFile>${project.build.directory}/bnd/MANIFEST.MF</manifestFile>
                     </archive>
                 </configuration>
                 <executions>
@@ -279,6 +313,11 @@
                 </plugin>
                 <plugin>
                     <groupId>org.apache.maven.plugins</groupId>
+                    <artifactId>maven-dependency-plugin</artifactId>
+                    <version>${maven-dependency-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>org.apache.maven.plugins</groupId>
                     <artifactId>maven-enforcer-plugin</artifactId>
                     <version>${maven-enforcer-plugin.version}</version>
                 </plugin>
@@ -337,6 +376,11 @@
                     <groupId>com.github.spotbugs</groupId>
                     <artifactId>spotbugs-maven-plugin</artifactId>
                     <version>${spotbugs-maven-plugin.version}</version>
+                </plugin>
+                <plugin>
+                    <groupId>biz.aQute.bnd</groupId>
+                    <artifactId>bnd-maven-plugin</artifactId>
+                    <version>${bnd-maven-plugin.version}</version>
                 </plugin>
                 <plugin>
                     <!-- SonarCloud analysis in the GitHub Actions workflow -->
