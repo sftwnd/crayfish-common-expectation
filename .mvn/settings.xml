@@ -61,7 +61,4 @@
     <activeProfiles>
         <activeProfile>default</activeProfile>
     </activeProfiles>
-    <pluginGroups>
-        <pluginGroup>com.atlassian.maven.plugins</pluginGroup>
-    </pluginGroups>
 </settings>
