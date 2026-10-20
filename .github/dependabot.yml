@@ -28,3 +28,6 @@ updates:
       # the 4.x plugins of Apache Maven are for Maven 4: the build runs on Maven 3.10
       - dependency-name: "org.apache.maven.plugins:*"
         update-types: [ "version-update:semver-major" ]
+      # bnd 7 requires Java 17: the build runs on JDK 8 as well
+      - dependency-name: "biz.aQute.bnd:*"
+        update-types: [ "version-update:semver-major" ]
